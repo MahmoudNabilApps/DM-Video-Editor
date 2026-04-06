@@ -1,0 +1,70 @@
+[versions]
+# ─── Build Tools ───────────────────────────────────────────────
+agp                   = "8.10.0"           # AGP 8.10.0 (May 2025) — latest stable 8.x
+kotlin                = "2.3.20"           # Kotlin 2.3.20 (March 16, 2026)
+
+# ─── AndroidX Core ─────────────────────────────────────────────
+coreKtx               = "1.15.0"
+appcompat             = "1.7.0"
+constraintlayout      = "2.2.1"
+recyclerview          = "1.4.0"
+
+# ─── Lifecycle ─────────────────────────────────────────────────
+lifecycleRuntimeKtx   = "2.9.0"
+
+# ─── Activity ──────────────────────────────────────────────────
+activityKtx           = "1.10.1"
+
+# ─── Material Design ───────────────────────────────────────────
+material              = "1.12.0"
+
+# ─── Media3 (ExoPlayer) ────────────────────────────────────────
+media3                = "1.9.3"            # media3 1.9.3 (March 16, 2026)
+
+# ─── Third-party ───────────────────────────────────────────────
+lottie                = "6.7.1"            # Lottie 6.7.1 (latest stable)
+coil                  = "3.4.0"            # Coil 3.4.0 (Feb 2026) — io.coil-kt.coil3
+coroutines            = "1.10.2"           # kotlinx-coroutines 1.10.2
+
+# ─── Testing ───────────────────────────────────────────────────
+junit                 = "4.13.2"
+junitVersion          = "1.2.1"
+espressoCore          = "3.6.1"
+
+[libraries]
+# Core
+androidx-core-ktx                  = { group = "androidx.core",               name = "core-ktx",                   version.ref = "coreKtx" }
+androidx-appcompat                  = { group = "androidx.appcompat",           name = "appcompat",                  version.ref = "appcompat" }
+androidx-constraintlayout           = { group = "androidx.constraintlayout",    name = "constraintlayout",           version.ref = "constraintlayout" }
+androidx-recyclerview               = { group = "androidx.recyclerview",        name = "recyclerview",               version.ref = "recyclerview" }
+
+# Lifecycle
+androidx-lifecycle-runtime-ktx      = { group = "androidx.lifecycle",          name = "lifecycle-runtime-ktx",      version.ref = "lifecycleRuntimeKtx" }
+androidx-lifecycle-viewmodel-ktx    = { group = "androidx.lifecycle",          name = "lifecycle-viewmodel-ktx",    version.ref = "lifecycleRuntimeKtx" }
+
+# Activity
+androidx-activity-ktx               = { group = "androidx.activity",           name = "activity-ktx",               version.ref = "activityKtx" }
+
+# Material
+material                            = { group = "com.google.android.material",  name = "material",                   version.ref = "material" }
+
+# Media3
+media3-exoplayer                    = { group = "androidx.media3",             name = "media3-exoplayer",           version.ref = "media3" }
+media3-ui                           = { group = "androidx.media3",             name = "media3-ui",                  version.ref = "media3" }
+media3-session                      = { group = "androidx.media3",             name = "media3-session",             version.ref = "media3" }
+
+# Third-party
+lottie                              = { group = "com.airbnb.android",          name = "lottie",                     version.ref = "lottie" }
+coil                                = { group = "io.coil-kt.coil3",            name = "coil",                       version.ref = "coil" }
+coil-network-okhttp                 = { group = "io.coil-kt.coil3",            name = "coil-network-okhttp",        version.ref = "coil" }
+kotlinx-coroutines-android          = { group = "org.jetbrains.kotlinx",       name = "kotlinx-coroutines-android", version.ref = "coroutines" }
+
+# Testing
+junit                               = { group = "junit",                        name = "junit",                      version.ref = "junit" }
+androidx-junit                      = { group = "androidx.test.ext",            name = "junit",                      version.ref = "junitVersion" }
+androidx-espresso-core              = { group = "androidx.test.espresso",       name = "espresso-core",              version.ref = "espressoCore" }
+
+[plugins]
+android-application        = { id = "com.android.application",       version.ref = "agp" }
+jetbrains-kotlin-android   = { id = "org.jetbrains.kotlin.android",  version.ref = "kotlin" }
+jetbrains-kotlin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "kotlin" }

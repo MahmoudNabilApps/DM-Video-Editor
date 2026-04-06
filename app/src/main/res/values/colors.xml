@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Filmora Dark Background -->
+    <color name="colorPrimary">#0A0A0A</color>
+    <color name="colorPrimaryVariant">#141414</color>
+
+    <!-- Filmora Orange Accent -->
+    <color name="colorAccent">#FF7A00</color>
+    <color name="colorAccentDark">#CC5500</color>
+    <color name="colorAccentLight">#FFB800</color>
+    <color name="colorAccentGold">#FFB800</color>
+    <color name="colorExportStart">#FF6600</color>
+    <color name="colorExportEnd">#FF9900</color>
+
+    <!-- Surface Colors -->
+    <color name="colorSurface">#111111</color>
+    <color name="colorSurfaceVariant">#1A1A1A</color>
+    <color name="colorSurfaceElevated">#242424</color>
+    <color name="colorCard">#1C1C1C</color>
+
+    <!-- Text Colors -->
+    <color name="colorOnPrimary">#FFFFFF</color>
+    <color name="colorOnSecondary">#AAAAAA</color>
+    <color name="colorTextHint">#555555</color>
+
+    <!-- Status Colors -->
+    <color name="colorSuccess">#4CAF50</color>
+    <color name="colorWarning">#FF9800</color>
+    <color name="colorError">#F44336</color>
+
+    <!-- Toolbar / Nav -->
+    <color name="colorToolbar">#0F0F0F</color>
+    <color name="colorNavBar">#0F0F0F</color>
+    <color name="colorStatusBar">#0A0A0A</color>
+
+    <!-- Timeline -->
+    <color name="colorTimeline">#222222</color>
+    <color name="colorTimelineHandle">#FF7A00</color>
+    <color name="colorTimelineProgress">#FF7A00</color>
+    <color name="colorPlayhead">#FF7A00</color>
+
+    <!-- Overlay / scrim -->
+    <color name="colorScrim">#CC000000</color>
+    <color name="colorBottomSheet">#1A1A1A</color>
+
+    <!-- Category tab -->
+    <color name="colorCategoryActive">#FF7A00</color>
+    <color name="colorCategoryInactive">#888888</color>
+
+    <!-- Import card -->
+    <color name="colorImportCard">#161616</color>
+    <color name="colorImportBorder">#2A2A2A</color>
+    <color name="colorNavItemActive">#FF7A00</color>
+    <color name="colorNavItemInactive">#666666</color>
+
+    <!-- Video editor activity (theming) -->
+    <color name="colorEditorBackground">#16213E</color>
+    <color name="colorSheetBackground">#1A1A1A</color>
+    <color name="colorAccentOrange">#FF7A00</color>
+    <color name="colorTextMuted">#AAAAAA</color>
+    <color name="colorSubtleText">#888888</color>
+    <color name="colorCardDark">#252525</color>
+    <color name="colorSurface2">#0D0D1A</color>
+    <color name="colorSurfaceDeep">#0D0D2A</color>
+    <color name="colorTextSoft">#CCCCCC</color>
+    <color name="colorInfoText">#AAAACC</color>
+    <color name="colorPurpleAccent">#6C63FF</color>
+    <color name="colorCyanAccent">#00C8FF</color>
+    <color name="colorPanelInner">#1E1E3A</color>
+    <color name="colorTabLabel">#DDDDDD</color>
+</resources>

@@ -1,0 +1,282 @@
+<resources>
+    <string name="app_name">Video Editor</string>
+    <string name="app_tagline">Professional Video Editing</string>
+    <string name="add_video">New Project</string>
+    <string name="create_engaging_videos">Tap to import a video and start editing</string>
+    <string name="home">Back</string>
+    <string name="trim">Trim</string>
+    <string name="split">Split</string>
+    <string name="effects">Effects</string>
+    <string name="export">Export</string>
+    <string name="delete">Delete</string>
+    <string name="trim_video">Trim Video</string>
+    <string name="save_video">Export</string>
+    <string name="add_overly">Overlay</string>
+    <string name="add_text">Text</string>
+    <string name="add_audio">Audio</string>
+    <string name="crop_video">Crop</string>
+    <string name="merge_video">Merge</string>
+    <string name="speed">Speed</string>
+    <string name="filter">Filter</string>
+    <string name="loading">Loading video…</string>
+    <string name="processing">Processing…</string>
+    <string name="default_time_stamp">00:00 / 00:00</string>
+    <string name="trim_your_video">Trim your video</string>
+    <string name="cancel">Cancel</string>
+    <string name="done">Done</string>
+    <string name="please_wait">Processing your video, please wait…</string>
+    <string name="select_aspect_ratio">Select Aspect Ratio</string>
+    <string name="export_success">Video exported successfully!</string>
+    <string name="export_error">Export failed. Please try again.</string>
+    <string name="select_video">Select Video</string>
+    <string name="add_text_hint">Enter your text…</string>
+    <string name="font_size">Font size</string>
+    <string name="text_position">Position</string>
+    <string name="text_color">Color</string>
+    <string name="start_time">Start</string>
+    <string name="end_time">End</string>
+    <string name="speed_normal">1×</string>
+    <string name="mute_audio">Mute Audio</string>
+    <string name="extract_audio">Extract Audio</string>
+    <string name="permissions_required">Permissions Required</string>
+    <string name="permissions_message">This app needs permission to access your videos.</string>
+    <string name="grant">Grant</string>
+    <string name="loading_tag">Importing video…</string>
+    <string name="keep_right_portion">Remove left</string>
+    <string name="keep_left_portion">Remove right</string>
+    <!-- New feature strings -->
+    <string name="color_adjust">Adjust</string>
+    <string name="opacity">Opacity</string>
+    <string name="freeze_frame">Freeze</string>
+    <string name="canvas_bg">Canvas</string>
+    <string name="voiceover">Voiceover</string>
+    <string name="pan_zoom">Pan&amp;Zoom</string>
+    <string name="noise_reduce">Denoise</string>
+    <string name="pip">PIP</string>
+    <string name="duplicate">Duplicate</string>
+    <string name="replace_clip">Replace</string>
+    <string name="stabilize">Stabilize</string>
+    <string name="new_project">New Project</string>
+    <string name="recent_projects">Recent Projects</string>
+    <string name="templates">Templates</string>
+    <string name="drafts">Drafts</string>
+    <string name="profile">Me</string>
+    <string name="coming_soon">Coming Soon</string>
+    <string name="no_recent_projects">No recent projects.\nTap + to create a new one.</string>
+    <string name="start_recording">Start Recording</string>
+    <string name="stop_recording">Stop Recording</string>
+    <string name="brightness">Brightness</string>
+    <string name="contrast">Contrast</string>
+    <string name="saturation">Saturation</string>
+    <string name="hue">Hue</string>
+    <string name="highlights">Highlights</string>
+    <string name="shadows">Shadows</string>
+    <string name="sharpen">Sharpen</string>
+    <string name="temperature">Temperature</string>
+    <string name="privacy_policy">Privacy Policy</string>
+    <!-- Public HTTPS URL of the same policy as assets/privacy_policy.html (e.g. raw GitHub after you push). -->
+    <string name="privacy_policy_url" translatable="false">https://raw.githubusercontent.com/DarkMo/VideoEditor_DM/main/app/src/main/assets/privacy_policy.html</string>
+    <string name="privacy_notice_short">Videos and audio are processed on your device only. Nothing is uploaded to our servers.</string>
+    <string name="open_policy_url">Open policy URL</string>
+    <!-- Draft strings -->
+    <string name="draft_deleted">Draft deleted</string>
+    <string name="no_drafts">No saved drafts</string>
+    <string name="draft_saved">✓ Draft saved</string>
+    <string name="draft_restored">✓ Draft restored</string>
+    <string name="resume_draft">Resume</string>
+    <string name="discard_draft">Discard</string>
+    <string name="draft_found_title">Saved draft found</string>
+    <string name="draft_found_message">We found a saved draft. Continue editing?</string>
+    <!-- Snackbar messages -->
+    <string name="snack_clip_added">✓ Clip added</string>
+    <string name="snack_clip_deleted">Clip deleted</string>
+    <string name="snack_export_done">✓ Saved to Movies</string>
+    <string name="snack_export_failed">Export failed. Try again.</string>
+    <string name="snack_processing">Processing…</string>
+    <string name="snack_trim_done">✓ Trim applied</string>
+    <string name="snack_split_done">✓ Clip split</string>
+    <string name="snack_filter_applied">✓ Filter applied</string>
+    <string name="snack_speed_changed">✓ Speed changed</string>
+    <string name="snack_text_added">✓ Text added</string>
+    <string name="snack_audio_added">✓ Audio added</string>
+    <string name="snack_recording_saved">✓ Recording saved</string>
+    <string name="snack_nothing_to_undo">Nothing to undo</string>
+    <string name="snack_nothing_to_redo">Nothing to redo</string>
+    <!-- Editor tools (for toolbar / quick actions) -->
+    <string name="tool_trim">Trim</string>
+    <string name="tool_split">Split</string>
+    <string name="tool_speed">Speed</string>
+    <string name="tool_filter">Filter</string>
+    <string name="tool_adjust">Adjust</string>
+    <string name="tool_text">Text</string>
+    <string name="tool_audio">Audio</string>
+    <string name="tool_crop">Crop</string>
+    <string name="tool_transition">Transition</string>
+    <string name="tool_voiceover">Voiceover</string>
+    <string name="tool_pip">PIP</string>
+    <string name="tool_freeze">Freeze</string>
+    <string name="tool_canvas">Canvas</string>
+    <string name="tool_duplicate">Duplicate</string>
+    <string name="tool_replace">Replace</string>
+    <string name="tool_mute">Mute</string>
+    <string name="tool_volume">Volume</string>
+    <!-- Export quality -->
+    <string name="quality_low">Low (360p)</string>
+    <string name="quality_medium">Medium (720p)</string>
+    <string name="quality_high">High (1080p)</string>
+    <string name="select_quality">Export quality</string>
+    <!-- Transitions -->
+    <string name="transition_none">None</string>
+    <string name="transition_fade">Fade</string>
+    <string name="transition_slide_left">Slide left</string>
+    <string name="transition_slide_right">Slide right</string>
+    <string name="transition_dissolve">Dissolve</string>
+    <string name="transition_zoom">Zoom</string>
+    <string name="transition_wipe">Wipe</string>
+    <string name="transition_circle">Circle</string>
+    <!-- Import / share -->
+    <string name="importing_clips">Importing clips…</string>
+    <string name="replace_project_title">Replace current project?</string>
+    <string name="replace_project_message">Your current timeline will be cleared and replaced with the new videos.</string>
+    <string name="replace_project_confirm">Replace</string>
+    <string name="quick_clip_actions">Quick actions</string>
+    <string name="text_overlay_full_video">Full video</string>
+    <plurals name="snack_clips_imported">
+        <item quantity="one">✓ Imported %d clip</item>
+        <item quantity="other">✓ Imported %d clips</item>
+    </plurals>
+    <string name="editor_keep_at_least_one_clip">Keep at least one clip</string>
+    <!-- Export flow -->
+    <string name="export_progress_title">Exporting video</string>
+    <string name="export_do_not_close">Do not close the app while exporting</string>
+    <string name="export_status_preparing">Preparing clips…</string>
+    <string name="export_status_clip">Preparing clip %1$d of %2$d…</string>
+    <string name="export_status_merge">Merging %1$d clips…</string>
+    <string name="export_status_text">Applying text and effects…</string>
+    <string name="export_status_final">Final encoding…</string>
+    <string name="export_status_encoding">Encoding… %1$s</string>
+    <string name="export_err_prepare">⚠ Could not prepare clips</string>
+    <string name="export_err_merge">⚠ Could not merge clips</string>
+    <string name="export_err_failed">⚠ Export failed — try a lower quality or shorter project</string>
+    <string name="export_success_title">Export complete</string>
+    <string name="export_success_message">Saved to Movies\nSize: %1$d MB\nText overlays: %2$d</string>
+    <string name="export_share_video">Share video</string>
+    <string name="export_ok">OK</string>
+    <string name="export_share_chooser">Share video</string>
+    <string name="export_error_generic">Error: %1$s</string>
+    <!-- Foreground export notification -->
+    <string name="export_notification_channel_name">Video export</string>
+    <string name="export_notification_channel_desc">Shows export progress when the app is in the background</string>
+    <string name="export_notification_title">Exporting video</string>
+    <string name="export_notification_complete">Finishing…</string>
+    <string name="export_cancel">Cancel</string>
+    <string name="export_started_snackbar">Export running — progress is in the notification</string>
+
+    <!-- Player errors -->
+    <string name="player_error_loading">Loading video…</string>
+    <string name="player_error_cannot_play">⚠ Cannot play this video</string>
+
+    <!-- Undo / Redo -->
+    <string name="snack_undo_done">↩ Undone</string>
+    <string name="snack_redo_done">↪ Redone</string>
+
+    <!-- Clip management -->
+    <string name="snack_clip_added_numbered">✓ Clip %1$d added</string>
+    <string name="clip_count_single">1 clip</string>
+    <string name="clip_count_plural">%1$d clips</string>
+    <string name="snack_cannot_read_file">Cannot read file</string>
+    <string name="snack_operation_failed">⚠ Operation failed</string>
+
+    <!-- Split -->
+    <string name="snack_split_preparing">⏳ Preparing split…</string>
+    <string name="snack_no_video_to_split">No video to split</string>
+    <string name="snack_move_playhead_first">Move the playhead to the split point first</string>
+    <string name="snack_cannot_read_source_file">⚠ Cannot read source file</string>
+    <string name="snack_split_done_at">✓ Split into 2 clips at %1$s</string>
+    <string name="snack_split_failed">⚠ Split failed — please try again</string>
+
+    <!-- Trim -->
+    <string name="snack_trim_range_too_small">Trim range too small — minimum 0.1 s</string>
+
+    <!-- Text overlay -->
+    <string name="text_sheet_title_edit">Edit text</string>
+    <string name="text_sheet_title_add">Add new text</string>
+    <string name="snack_enter_text_first">Please enter some text</string>
+    <string name="snack_text_updated">✓ Text updated</string>
+    <string name="snack_text_added_timeline">✓ Text added — visible in the text track</string>
+    <string name="snack_timeline_text_hint">Texts appear in the text track on the timeline</string>
+
+    <!-- Lyrics / subtitles -->
+    <string name="snack_enter_lyrics_first">Enter the lyrics first</string>
+    <string name="snack_lyrics_added">✓ %1$d lines added — press Play to preview</string>
+    <string name="snack_color_selected">Selected: %1$s</string>
+    <string name="btn_set_start_now">⏱ Set start = now (%1$s)</string>
+    <string name="btn_start_set">⏱ Start time set ✓</string>
+    <string name="btn_use_current_time">⏱ Use current time as start (%1$s)</string>
+
+    <!-- Emoji -->
+    <string name="snack_emoji_added">✓ %1$s added — drag to reposition</string>
+    <string name="emoji_size_dialog_title">Emoji size  %1$s</string>
+
+    <!-- Transitions -->
+    <string name="transition_pick_location_title">Choose transition location</string>
+    <string name="transition_before_clip">Before clip %1$d</string>
+    <string name="transition_dialog_title">Transition before clip %1$d</string>
+    <string name="snack_transition_applied">✓ %1$s</string>
+    <string name="snack_add_two_clips_for_transitions">Add at least two clips for transitions</string>
+
+    <!-- Volume -->
+    <string name="volume_sheet_title">Clip %1$d volume</string>
+    <string name="btn_apply">Apply</string>
+
+    <!-- Audio -->
+    <string name="audio_sheet_title">Audio</string>
+    <string name="snack_cannot_read_video">Cannot read video</string>
+    <string name="snack_cannot_read_audio">Cannot read audio</string>
+    <string name="snack_audio_saved">✓ Saved to Movies</string>
+
+    <!-- Reverse -->
+    <string name="snack_reversing_video">⏳ Reversing video… this may take a while</string>
+
+    <!-- Effects -->
+    <string name="snack_applying_effect">⏳ Applying %1$s…</string>
+
+    <!-- Freeze frame -->
+    <string name="snack_navigate_to_frame_first">Navigate to the frame you want to freeze first</string>
+    <string name="snack_freeze_failed_extract">⚠ Failed to extract frame</string>
+    <string name="snack_freeze_inserted">✓ Freeze frame of %1$ss inserted at %2$s</string>
+    <string name="snack_freeze_create_failed">⚠ Failed to create freeze frame</string>
+    <string name="snack_cannot_read_file_2">Cannot read file</string>
+
+    <!-- PIP -->
+    <string name="snack_applying_pip">⏳ Applying picture-in-picture…</string>
+    <string name="snack_cannot_read_main_video">Cannot read main video</string>
+    <string name="snack_cannot_read_overlay_video">Cannot read overlay video</string>
+
+    <!-- Voiceover -->
+    <string name="snack_microphone_permission_needed">Microphone permission is required for voiceover</string>
+    <string name="snack_recording_start_failed">⚠ Failed to start: %1$s</string>
+    <string name="snack_recording_stop_failed">⚠ Failed to stop: %1$s</string>
+    <string name="snack_recording_not_found">Recording not found</string>
+    <string name="snack_voiceover_added">✓ Voiceover added</string>
+
+    <!-- Replace clip -->
+    <string name="replace_clip_dialog_title">Replace Clip %1$d</string>
+    <string name="replace_clip_dialog_message">Select a new video to replace the current clip.</string>
+    <string name="btn_choose_video">Choose Video</string>
+    <string name="snack_clip_replaced">✓ Clip replaced</string>
+
+    <!-- Duplicate -->
+    <string name="snack_clip_duplicated">✓ Clip duplicated</string>
+
+    <!-- Stabilize -->
+    <string name="snack_stabilizing_video">⏳ Stabilizing video…</string>
+    <string name="stabilize_description">Reduces hand-held camera shake.\n\nThis process may take several minutes for longer videos.</string>
+
+    <!-- Pan &amp; Zoom -->
+    <string name="snack_applying_pan_zoom">⏳ Applying %1$s…</string>
+
+    <!-- General save -->
+    <string name="snack_saved">✓ Saved</string>
+</resources>
+

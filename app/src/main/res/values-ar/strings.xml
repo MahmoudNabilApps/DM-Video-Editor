@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">محرر الفيديو</string>
+    <string name="app_tagline">تحرير فيديو احترافي</string>
+    <string name="add_video">مشروع جديد</string>
+    <string name="create_engaging_videos">اضغط لاستيراد فيديو والبدء في التحرير</string>
+    <string name="home">رجوع</string>
+    <string name="trim">قص</string>
+    <string name="split">تقسيم</string>
+    <string name="effects">تأثيرات</string>
+    <string name="export">تصدير</string>
+    <string name="delete">حذف</string>
+    <string name="trim_video">قص الفيديو</string>
+    <string name="save_video">تصدير</string>
+    <string name="add_overly">تراكب</string>
+    <string name="add_text">نص</string>
+    <string name="add_audio">صوت</string>
+    <string name="crop_video">اقتصاص</string>
+    <string name="merge_video">دمج</string>
+    <string name="speed">السرعة</string>
+    <string name="filter">فلتر</string>
+    <string name="loading">جارٍ تحميل الفيديو…</string>
+    <string name="processing">جارٍ المعالجة…</string>
+    <string name="default_time_stamp">00:00 / 00:00</string>
+    <string name="trim_your_video">قص الفيديو</string>
+    <string name="cancel">إلغاء</string>
+    <string name="done">تم</string>
+    <string name="please_wait">جارٍ معالجة الفيديو، يرجى الانتظار…</string>
+    <string name="select_aspect_ratio">اختر نسبة العرض إلى الارتفاع</string>
+    <string name="export_success">تم تصدير الفيديو بنجاح!</string>
+    <string name="export_error">فشل التصدير. يرجى المحاولة مجدداً.</string>
+    <string name="select_video">اختر فيديو</string>
+    <string name="add_text_hint">أدخل النص…</string>
+    <string name="font_size">حجم الخط</string>
+    <string name="text_position">الموضع</string>
+    <string name="text_color">اللون</string>
+    <string name="start_time">البداية</string>
+    <string name="end_time">النهاية</string>
+    <string name="speed_normal">1×</string>
+    <string name="mute_audio">كتم الصوت</string>
+    <string name="extract_audio">استخراج الصوت</string>
+    <string name="permissions_required">الأذونات مطلوبة</string>
+    <string name="permissions_message">يحتاج التطبيق إلى إذن للوصول إلى مقاطع الفيديو.</string>
+    <string name="grant">منح الإذن</string>
+    <string name="loading_tag">جارٍ استيراد الفيديو…</string>
+    <string name="keep_right_portion">حذف الجزء الأيسر</string>
+    <string name="keep_left_portion">حذف الجزء الأيمن</string>
+    <!-- ميزات جديدة -->
+    <string name="color_adjust">ضبط الألوان</string>
+    <string name="opacity">الشفافية</string>
+    <string name="freeze_frame">تجميد</string>
+    <string name="canvas_bg">الخلفية</string>
+    <string name="voiceover">تعليق صوتي</string>
+    <string name="pan_zoom">تكبير وتحريك</string>
+    <string name="noise_reduce">تقليل الضوضاء</string>
+    <string name="pip">صورة داخل صورة</string>
+    <string name="duplicate">تكرار</string>
+    <string name="replace_clip">استبدال</string>
+    <string name="stabilize">تثبيت</string>
+    <string name="new_project">مشروع جديد</string>
+    <string name="recent_projects">المشاريع الأخيرة</string>
+    <string name="templates">القوالب</string>
+    <string name="drafts">المسودات</string>
+    <string name="profile">أنا</string>
+    <string name="coming_soon">قريباً</string>
+    <string name="no_recent_projects">لا توجد مشاريع حديثة.\nاضغط + لإنشاء مشروع جديد.</string>
+    <string name="start_recording">بدء التسجيل</string>
+    <string name="stop_recording">إيقاف التسجيل</string>
+    <string name="brightness">السطوع</string>
+    <string name="contrast">التباين</string>
+    <string name="saturation">التشبع</string>
+    <string name="hue">درجة اللون</string>
+    <string name="highlights">الإضاءة</string>
+    <string name="shadows">الظلال</string>
+    <string name="sharpen">الحدة</string>
+    <string name="temperature">درجة الحرارة اللونية</string>
+    <string name="privacy_policy">سياسة الخصوصية</string>
+    <string name="privacy_policy_url" translatable="false">https://raw.githubusercontent.com/DarkMo/VideoEditor_DM/main/app/src/main/assets/privacy_policy.html</string>
+    <string name="privacy_notice_short">تتم معالجة مقاطع الفيديو والصوت على جهازك فقط. لا يتم رفع أي شيء إلى خوادمنا.</string>
+    <string name="open_policy_url">فتح رابط السياسة</string>
+    <!-- مسودات -->
+    <string name="draft_saved">✓ تم حفظ المسودة</string>
+    <string name="draft_restored">✓ تم استعادة المسودة</string>
+    <string name="draft_deleted">تم حذف المسودة</string>
+    <string name="no_drafts">لا توجد مسودات محفوظة</string>
+    <string name="resume_draft">استئناف المسودة</string>
+    <string name="discard_draft">تجاهل</string>
+    <string name="draft_found_title">مسودة محفوظة</string>
+    <string name="draft_found_message">وجدنا مسودة محفوظة. هل تريد متابعة التحرير؟</string>
+    <!-- رسائل الـ Snackbar -->
+    <string name="snack_clip_added">✓ تمت إضافة المقطع</string>
+    <string name="snack_clip_deleted">تم حذف المقطع</string>
+    <string name="snack_export_done">✓ تم! الفيديو محفوظ في Movies</string>
+    <string name="snack_export_failed">فشل التصدير. حاول مجدداً.</string>
+    <string name="snack_processing">جارٍ المعالجة…</string>
+    <string name="snack_trim_done">✓ تم القص</string>
+    <string name="snack_split_done">✓ تم التقسيم</string>
+    <string name="snack_filter_applied">✓ تم تطبيق الفلتر</string>
+    <string name="snack_speed_changed">✓ تم تغيير السرعة</string>
+    <string name="snack_text_added">✓ تمت إضافة النص</string>
+    <string name="snack_audio_added">✓ تمت إضافة الصوت</string>
+    <string name="snack_recording_saved">✓ تم حفظ التسجيل</string>
+    <string name="snack_nothing_to_undo">لا يوجد شيء للتراجع عنه</string>
+    <string name="snack_nothing_to_redo">لا يوجد شيء لإعادته</string>
+    <!-- أدوات التحرير -->
+    <string name="tool_trim">قص</string>
+    <string name="tool_split">تقسيم</string>
+    <string name="tool_speed">السرعة</string>
+    <string name="tool_filter">فلتر</string>
+    <string name="tool_adjust">ضبط</string>
+    <string name="tool_text">نص</string>
+    <string name="tool_audio">صوت</string>
+    <string name="tool_crop">اقتصاص</string>
+    <string name="tool_transition">انتقال</string>
+    <string name="tool_voiceover">تعليق</string>
+    <string name="tool_pip">PIP</string>
+    <string name="tool_freeze">تجميد</string>
+    <string name="tool_canvas">خلفية</string>
+    <string name="tool_duplicate">تكرار</string>
+    <string name="tool_replace">استبدال</string>
+    <string name="tool_mute">كتم</string>
+    <string name="tool_volume">الصوت</string>
+    <!-- جودة التصدير -->
+    <string name="quality_low">منخفضة (360p)</string>
+    <string name="quality_medium">متوسطة (720p)</string>
+    <string name="quality_high">عالية (1080p)</string>
+    <string name="select_quality">اختر جودة التصدير</string>
+    <!-- انتقالات -->
+    <string name="transition_none">بلا انتقال</string>
+    <string name="transition_fade">تلاشي</string>
+    <string name="transition_slide_left">انزلاق يسار</string>
+    <string name="transition_slide_right">انزلاق يمين</string>
+    <string name="transition_dissolve">ذوبان</string>
+    <string name="transition_zoom">تكبير</string>
+    <string name="transition_wipe">مسح</string>
+    <string name="transition_circle">دائرة</string>
+    <string name="importing_clips">جارٍ استيراد المقاطع…</string>
+    <string name="replace_project_title">استبدال المشروع الحالي؟</string>
+    <string name="replace_project_message">سيتم مسح الجدول الزمني الحالي واستبداله بالفيديوهات الجديدة.</string>
+    <string name="replace_project_confirm">استبدال</string>
+    <string name="quick_clip_actions">إجراءات سريعة</string>
+    <string name="text_overlay_full_video">كامل الفيديو</string>
+    <string name="editor_keep_at_least_one_clip">يجب أن يوجد مقطع واحد على الأقل</string>
+    <string name="export_progress_title">جارٍ تصدير الفيديو</string>
+    <string name="export_do_not_close">لا تغلق التطبيق أثناء التصدير</string>
+    <string name="export_status_preparing">تحضير المقاطع…</string>
+    <string name="export_status_clip">تحضير مقطع %1$d من %2$d…</string>
+    <string name="export_status_merge">دمج %1$d مقطع…</string>
+    <string name="export_status_text">إضافة النصوص والتأثيرات…</string>
+    <string name="export_status_final">التشفير النهائي…</string>
+    <string name="export_status_encoding">تشفير… %1$s</string>
+    <string name="export_err_prepare">⚠ فشل تحضير المقاطع</string>
+    <string name="export_err_merge">⚠ فشل دمج المقاطع</string>
+    <string name="export_err_failed">⚠ فشل التصدير — جرّب جودة أقل أو مقطعاً أقصر</string>
+    <string name="export_success_title">تم التصدير بنجاح</string>
+    <string name="export_success_message">تم الحفظ في Movies\nالحجم: %1$d ميجابايت\nالنصوص المضافة: %2$d</string>
+    <string name="export_share_video">مشاركة الفيديو</string>
+    <string name="export_ok">حسناً</string>
+    <string name="export_share_chooser">مشاركة الفيديو</string>
+    <string name="export_error_generic">خطأ: %1$s</string>
+    <string name="export_notification_channel_name">تصدير الفيديو</string>
+    <string name="export_notification_channel_desc">يعرض تقدّم التصدير عندما يكون التطبيق في الخلفية</string>
+    <string name="export_notification_title">جارٍ تصدير الفيديو</string>
+    <string name="export_notification_complete">جارٍ الإنهاء…</string>
+    <string name="export_cancel">إلغاء</string>
+    <string name="export_started_snackbar">التصدير يعمل — تقدّمه في الإشعار</string>
+
+    <!-- أخطاء المشغّل -->
+    <string name="player_error_loading">جارٍ تحميل الفيديو…</string>
+    <string name="player_error_cannot_play">⚠ تعذّر تشغيل الفيديو</string>
+
+    <!-- تراجع / إعادة -->
+    <string name="snack_undo_done">↩ تم التراجع</string>
+    <string name="snack_redo_done">↪ تمت الإعادة</string>
+
+    <!-- إدارة المقاطع -->
+    <string name="snack_clip_added_numbered">✓ تمت إضافة المقطع %1$d</string>
+    <string name="clip_count_single">مقطع واحد</string>
+    <string name="clip_count_plural">%1$d مقطع</string>
+    <string name="snack_cannot_read_file">تعذّر قراءة الملف</string>
+    <string name="snack_operation_failed">⚠ فشلت العملية</string>
+
+    <!-- تقسيم -->
+    <string name="snack_split_preparing">⏳ جارٍ التحضير للتقسيم…</string>
+    <string name="snack_no_video_to_split">لا يوجد فيديو للتقسيم</string>
+    <string name="snack_move_playhead_first">حرّك مؤشر التشغيل إلى نقطة التقسيم أولاً</string>
+    <string name="snack_cannot_read_source_file">⚠ تعذّر قراءة الملف المصدر</string>
+    <string name="snack_split_done_at">✓ تم التقسيم إلى مقطعَين عند %1$s</string>
+    <string name="snack_split_failed">⚠ فشل التقسيم — حاول مجدداً</string>
+
+    <!-- قص -->
+    <string name="snack_trim_range_too_small">نطاق القص صغير جداً — الحد الأدنى 0.1 ثانية</string>
+
+    <!-- نصوص التراكب -->
+    <string name="text_sheet_title_edit">تعديل نص</string>
+    <string name="text_sheet_title_add">إضافة نص جديد</string>
+    <string name="snack_enter_text_first">اكتب النص أولاً</string>
+    <string name="snack_text_updated">✓ تم تحديث النص</string>
+    <string name="snack_text_added_timeline">✓ تمت إضافة النص — يظهر في مسار النص</string>
+    <string name="snack_timeline_text_hint">النصوص تظهر في مسار النص بالجدول الزمني</string>
+
+    <!-- كلمات / ترجمة -->
+    <string name="snack_enter_lyrics_first">أدخل كلمات الأغنية أولاً</string>
+    <string name="snack_lyrics_added">✓ تمت إضافة %1$d سطراً — اضغط تشغيل للمعاينة</string>
+    <string name="snack_color_selected">تم اختيار: %1$s</string>
+    <string name="btn_set_start_now">⏱ بداية = الآن (%1$s)</string>
+    <string name="btn_start_set">⏱ تم ضبط وقت البداية ✓</string>
+    <string name="btn_use_current_time">⏱ استخدام الوقت الحالي كبداية (%1$s)</string>
+
+    <!-- إيموجي -->
+    <string name="snack_emoji_added">✓ تمت إضافة %1$s — اسحبه لتغيير موضعه</string>
+    <string name="emoji_size_dialog_title">حجم الإيموجي  %1$s</string>
+
+    <!-- انتقالات -->
+    <string name="transition_pick_location_title">اختر موضع الانتقال</string>
+    <string name="transition_before_clip">قبل مقطع %1$d</string>
+    <string name="transition_dialog_title">انتقال قبل مقطع %1$d</string>
+    <string name="snack_transition_applied">✓ %1$s</string>
+    <string name="snack_add_two_clips_for_transitions">أضف مقطعَين على الأقل للانتقالات</string>
+
+    <!-- مستوى الصوت -->
+    <string name="volume_sheet_title">مستوى صوت المقطع %1$d</string>
+    <string name="btn_apply">تطبيق</string>
+
+    <!-- صوت -->
+    <string name="audio_sheet_title">الصوت</string>
+    <string name="snack_cannot_read_video">تعذّر قراءة الفيديو</string>
+    <string name="snack_cannot_read_audio">تعذّر قراءة الصوت</string>
+    <string name="snack_audio_saved">✓ تم! الفيديو محفوظ في Movies</string>
+
+    <!-- عكس -->
+    <string name="snack_reversing_video">⏳ جارٍ عكس الفيديو… قد يستغرق هذا وقتاً</string>
+
+    <!-- مؤثرات -->
+    <string name="snack_applying_effect">⏳ جارٍ تطبيق %1$s…</string>
+
+    <!-- تجميد الإطار -->
+    <string name="snack_navigate_to_frame_first">انتقل إلى الإطار الذي تريد تجميده أولاً</string>
+    <string name="snack_freeze_failed_extract">⚠ فشل استخراج الإطار</string>
+    <string name="snack_freeze_inserted">✓ تم إدراج إطار مجمّد لمدة %1$s ثانية عند %2$s</string>
+    <string name="snack_freeze_create_failed">⚠ فشل إنشاء إطار مجمّد</string>
+    <string name="snack_cannot_read_file_2">تعذّر قراءة الملف</string>
+
+    <!-- صورة داخل صورة -->
+    <string name="snack_applying_pip">⏳ جارٍ تطبيق صورة داخل صورة…</string>
+    <string name="snack_cannot_read_main_video">تعذّر قراءة الفيديو الرئيسي</string>
+    <string name="snack_cannot_read_overlay_video">تعذّر قراءة فيديو التراكب</string>
+
+    <!-- تعليق صوتي -->
+    <string name="snack_microphone_permission_needed">يلزم إذن الميكروفون للتعليق الصوتي</string>
+    <string name="snack_recording_start_failed">⚠ فشل البدء: %1$s</string>
+    <string name="snack_recording_stop_failed">⚠ فشل الإيقاف: %1$s</string>
+    <string name="snack_recording_not_found">لم يُعثر على التسجيل</string>
+    <string name="snack_voiceover_added">✓ تمت إضافة التعليق الصوتي</string>
+
+    <!-- استبدال المقطع -->
+    <string name="replace_clip_dialog_title">استبدال المقطع %1$d</string>
+    <string name="replace_clip_dialog_message">اختر فيديو جديداً لاستبدال المقطع الحالي.</string>
+    <string name="btn_choose_video">اختر فيديو</string>
+    <string name="snack_clip_replaced">✓ تم استبدال المقطع</string>
+
+    <!-- تكرار -->
+    <string name="snack_clip_duplicated">✓ تم تكرار المقطع</string>
+
+    <!-- تثبيت -->
+    <string name="snack_stabilizing_video">⏳ جارٍ تثبيت الفيديو…</string>
+    <string name="stabilize_description">يقلل من الاهتزاز الناتج عن التصوير باليد.\n\nقد تستغرق هذه العملية عدة دقائق للفيديوهات الطويلة.</string>
+
+    <!-- تكبير وتحريك -->
+    <string name="snack_applying_pan_zoom">⏳ جارٍ تطبيق %1$s…</string>
+
+    <!-- حفظ عام -->
+    <string name="snack_saved">✓ تم الحفظ</string>
+</resources>
+

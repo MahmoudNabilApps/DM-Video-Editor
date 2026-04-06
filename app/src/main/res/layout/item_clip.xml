@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="100dp"
+    android:layout_height="80dp"
+    android:layout_marginStart="3dp"
+    android:layout_marginEnd="3dp"
+    android:background="#1A1A1A"
+    android:clickable="true"
+    android:focusable="true">
+
+    <ImageView
+        android:id="@+id/ivClipThumb"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:src="@android:drawable/ic_media_play" />
+
+    <!-- Clip order (1, 2, 3…) -->
+    <TextView
+        android:id="@+id/tvClipNumber"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:shadowColor="#E6000000"
+        android:shadowDx="0"
+        android:shadowDy="1"
+        android:shadowRadius="4"
+        android:textColor="#FFFFFF"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+
+    <!-- Dark gradient overlay at bottom -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="28dp"
+        android:layout_gravity="bottom"
+        android:background="#AA000000" />
+
+    <!-- Duration badge -->
+    <TextView
+        android:id="@+id/tvClipDuration"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|start"
+        android:layout_margin="4dp"
+        android:paddingStart="4dp"
+        android:paddingEnd="4dp"
+        android:paddingTop="1dp"
+        android:paddingBottom="1dp"
+        android:text="0:00"
+        android:textColor="#FFFFFF"
+        android:textSize="9sp"
+        android:fontFamily="monospace" />
+
+    <!-- Delete button -->
+    <ImageButton
+        android:id="@+id/btnDeleteClip"
+        android:layout_width="22dp"
+        android:layout_height="22dp"
+        android:layout_gravity="top|end"
+        android:layout_margin="3dp"
+        android:background="#BB000000"
+        android:src="@drawable/ic_delete_24"
+        android:scaleType="fitCenter"
+        android:padding="3dp"
+        android:tint="#FF5555" />
+
+    <!-- Speed/transition badge -->
+    <TextView
+        android:id="@+id/tvTransitionBadge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|start"
+        android:layout_margin="3dp"
+        android:background="#CC000000"
+        android:paddingStart="4dp"
+        android:paddingEnd="4dp"
+        android:paddingTop="2dp"
+        android:paddingBottom="2dp"
+        android:text="1×"
+        android:textColor="#FF7A00"
+        android:textSize="8sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
+
+    <!-- Selected border highlight (Filmora orange) -->
+    <View
+        android:id="@+id/viewSelectedBorder"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/selected_clip_border"
+        android:visibility="gone" />
+
+</FrameLayout>

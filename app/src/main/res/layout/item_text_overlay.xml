@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#16213E"
+    android:orientation="horizontal"
+    android:padding="8dp"
+    android:layout_marginBottom="2dp"
+    android:gravity="center_vertical">
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+        <TextView
+            android:id="@+id/tvOverlayText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Sample text"
+            android:textColor="#FFFFFF"
+            android:textSize="13sp" />
+        <TextView
+            android:id="@+id/tvOverlayTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="كامل الفيديو"
+            android:textColor="#888888"
+            android:textSize="10sp" />
+    </LinearLayout>
+
+    <ImageButton
+        android:id="@+id/btnEditOverlay"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:padding="6dp"
+        android:src="@drawable/ic_text_24"
+        android:tint="#00C8FF" />
+
+    <ImageButton
+        android:id="@+id/btnDeleteOverlay"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:padding="6dp"
+        android:src="@drawable/ic_delete_24"
+        android:tint="#FF4444" />
+
+</LinearLayout>

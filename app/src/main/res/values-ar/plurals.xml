@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="snack_clips_imported">
+        <item quantity="one">✓ تم استيراد مقطع واحد</item>
+        <item quantity="other">✓ تم استيراد %d مقطع</item>
+    </plurals>
+</resources>

@@ -54,6 +54,10 @@ object FFmpegCommandBuilder {
         "circleopen"  -> "circleopen"
         "wipeup"      -> "wipeup"
         "wipedown"    -> "wipedown"
+        "pixelize"    -> "pixelize"
+        "radial"      -> "radial"
+        "squeezev"    -> "squeezev"
+        "smoothstep"  -> "smoothstep"
         else          -> "fade"
     }
 

@@ -155,7 +155,7 @@ class VideoEditingActivity : AppCompatActivity() {
     internal var isRecording = false
 
     // dp extension
-    private val Int.dp: Int get() = (this * resources.displayMetrics.density).toInt()
+    internal val Int.dp: Int get() = (this * resources.displayMetrics.density).toInt()
 
     // Launchers
     internal val addVideoLauncher = registerForActivityResult(ActivityResultContracts.GetMultipleContents()) { uris ->

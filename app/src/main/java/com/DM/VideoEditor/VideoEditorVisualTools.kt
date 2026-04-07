@@ -15,6 +15,8 @@ import android.view.ViewGroup
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
@@ -92,10 +94,57 @@ internal fun VideoEditingActivity.reverseVideo() {
 
 // ── FILTERS ──────────────────────────────────────────────
 internal fun VideoEditingActivity.showFilterSheet() {
-    val act = this
-    val names = arrayOf("❌ بدون","⬛ أبيض وأسود","🟤 خمري","🟡 دافئ","🔵 بارد","☀️ مضيء","🌈 حيوي","🌫️ باهت","🎞️ فينييت","🔆 تباين عالي","🟣 أرجواني","🎬 درامي","📺 ريترو","🌅 غروب","🧊 جليدي")
-    val cmds = arrayOf(null,"hue=s=0","colorchannelmixer=.393:.769:.189:0:.349:.686:.168:0:.272:.534:.131","colorbalance=rs=0.2:gs=0.1:bs=-0.1","colorbalance=rs=-0.1:gs=-0.1:bs=0.2","eq=brightness=0.12:contrast=1.1:saturation=1.1","eq=saturation=1.6:contrast=1.15","eq=brightness=-0.1:contrast=0.85:saturation=0.7","vignette=PI/4","eq=contrast=1.6:brightness=0.05:saturation=1.2","colorbalance=rs=0.1:gs=-0.05:bs=0.2","eq=contrast=1.4:brightness=-0.05:saturation=0.6,vignette=PI/5","curves=vintage","colorbalance=rs=0.3:gs=0.1:bs=-0.2,eq=saturation=1.3","colorbalance=rs=-0.2:gs=-0.05:bs=0.3,eq=brightness=0.05")
-    MaterialAlertDialogBuilder(act).setTitle("الفلاتر").setItems(names) { _, w -> cmds[w]?.let { applyFilter(it) } }.show()
+    val clip = clips.getOrNull(selectedClipIndex) ?: return
+    val d = BottomSheetDialog(this)
+    val root = LinearLayout(this).apply {
+        orientation = LinearLayout.VERTICAL
+        setBackgroundColor(editorColor(R.color.colorSheetBackground))
+        setPadding(32, 32, 32, 60)
+    }
+
+    TextView(this).apply {
+        text = "🎬 فلاتر سينمائية (Cinematic Filters)"
+        textSize = 18f; setTextColor(Color.WHITE); setTypeface(null, android.graphics.Typeface.BOLD)
+        setPadding(0, 0, 0, 16)
+    }.also { root.addView(it) }
+
+    val rv = RecyclerView(this).apply {
+        layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, this@showFilterSheet.run { 360.dp })
+        layoutManager = GridLayoutManager(this@showFilterSheet, 3)
+    }
+
+    val presets = ColorPreset.getAll()
+    rv.adapter = FilterSelectorAdapter(presets, clip.filterCmd) { p ->
+        applyFilter(p.filter ?: "")
+        showSnack("✓ تم تطبيق فلتر: ${p.label}")
+    }
+    root.addView(rv)
+
+    MaterialButton(this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+        text = getString(R.string.btn_apply_to_all)
+        setTextColor(editorColor(R.color.colorAccentOrange))
+        layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = 20 }
+        setOnClickListener {
+            val currentFilter = clips[selectedClipIndex].filterCmd
+            val backups = clips.map { it.filterCmd }
+            clips.forEach { it.filterCmd = currentFilter }
+            clipAdapter.notifyDataSetChanged()
+            undoRedo.commit(
+                undo = {
+                    backups.forEachIndexed { i, s -> clips[i].filterCmd = s }
+                    clipAdapter.notifyDataSetChanged()
+                },
+                redo = {
+                    clips.forEach { it.filterCmd = currentFilter }
+                    clipAdapter.notifyDataSetChanged()
+                }
+            )
+            d.dismiss()
+            showSnack(getString(R.string.snack_applied_to_all))
+        }
+    }.also { root.addView(it) }
+
+    d.setContentView(root); d.show()
 }
 
 internal fun VideoEditingActivity.applyFilter(f: String) {

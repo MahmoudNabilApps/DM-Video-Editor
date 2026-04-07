@@ -942,7 +942,15 @@ internal fun execFfmpegClipReplace(
                 }
                 val newUri = Uri.fromFile(out)
                 val dur = withContext(Dispatchers.IO) { getClipDurationMs(newUri) }
-                val newClip = undoBaseline.copy(uri = newUri, durationMs = dur, startTrimMs = 0L, endTrimMs = 0L)
+                val newClip = undoBaseline.copy(
+                    uri = newUri,
+                    durationMs = dur,
+                    startTrimMs = 0L,
+                    endTrimMs = 0L,
+                    speedFactor = 1.0f,
+                    filterCmd = "",
+                    volume = 1.0f
+                )
                 undoRedo.register(
                     undo = {
                         clips[idx] = undoBaseline

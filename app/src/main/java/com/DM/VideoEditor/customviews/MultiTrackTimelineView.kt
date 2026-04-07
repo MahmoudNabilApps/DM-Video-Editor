@@ -258,19 +258,24 @@ class MultiTrackTimelineView @JvmOverloads constructor(
     private fun drawTrackBgs(canvas: Canvas) {
         // Video Track
         canvas.drawRect(labelW, videoTrackTop, width.toFloat(), videoTrackBot, pVTrackBg)
-        canvas.drawLine(labelW, videoTrackBot, width.toFloat(), videoTrackBot, pSep)
+        canvas.drawLine(0f, videoTrackBot, width.toFloat(), videoTrackBot, pSep)
 
-        // Text Tracks
+        // Text Tracks - Professional lane separation
         for (r in 0 until maxTextRows) {
-            pTTrackBg.color = if (r % 2 == 0) Color.parseColor("#151525") else Color.parseColor("#1A1A2A")
+            // Selected text row highlight
+            val isRowSelected = textBlocks.any { it.trackRow == r && textBlocks.indexOf(it) == selTextIdx }
+            pTTrackBg.color = if (isRowSelected) Color.parseColor("#1A1A3A")
+                             else if (r % 2 == 0) Color.parseColor("#151525")
+                             else Color.parseColor("#1A1A2A")
+
             canvas.drawRect(labelW, textRowTop(r), width.toFloat(), textRowBot(r), pTTrackBg)
-            canvas.drawLine(labelW, textRowBot(r), width.toFloat(), textRowBot(r), pSep)
+            canvas.drawLine(0f, textRowBot(r), width.toFloat(), textRowBot(r), pSep)
         }
 
         // Audio Track
         if (hasAudioTrack) {
             canvas.drawRect(labelW, audioTrackTop, width.toFloat(), audioTrackBot, pATrackBg)
-            canvas.drawLine(labelW, audioTrackBot, width.toFloat(), audioTrackBot, pSep)
+            canvas.drawLine(0f, audioTrackBot, width.toFloat(), audioTrackBot, pSep)
         }
     }
 
@@ -534,9 +539,11 @@ class MultiTrackTimelineView @JvmOverloads constructor(
         canvas.drawText("🎞", labelW / 2f, (videoTrackTop + videoTrackBot) / 2f + 5f * d, pLabelR)
 
         // Text Labels
-        pLabelR.textSize = 14f * d; pLabelR.color = Color.parseColor("#4488FF")
-        for (r in 0 until maxTextRows)
-            canvas.drawText("T", labelW / 2f, (textRowTop(r) + textRowBot(r)) / 2f + 5f * d, pLabelR)
+    pLabelR.textSize = 10f * d; pLabelR.color = Color.parseColor("#4488FF")
+    for (r in 0 until maxTextRows) {
+        val y = (textRowTop(r) + textRowBot(r)) / 2f + 4f * d
+        canvas.drawText("TEXT ${r + 1}", labelW / 2f, y, pLabelR)
+    }
 
         // Audio Label
         if (hasAudioTrack) {

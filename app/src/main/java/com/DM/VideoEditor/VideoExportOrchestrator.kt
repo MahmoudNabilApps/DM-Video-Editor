@@ -208,12 +208,38 @@ class VideoExportOrchestrator(private val context: Context) {
             textOverlays.forEachIndexed { i, o ->
                 val next = if (i == textOverlays.lastIndex) "[vout]" else "[vt$i]"
                 val enable = when {
-                    o.endSec > 0 && o.startSec > 0 -> ":enable='between(t,${o.startSec},${o.endSec})'"
-                    o.endSec > 0 -> ":enable='lte(t,${o.endSec})'"
-                    o.startSec > 0 -> ":enable='gte(t,${o.startSec})'"
+                    o.endSec > 0 && o.startSec > 0 -> "between(t,${o.startSec},${o.endSec})"
+                    o.endSec > 0 -> "lte(t,${o.endSec})"
+                    o.startSec > 0 -> "gte(t,${o.startSec})"
+                    else -> "1"
+                }
+
+                // Animation logic
+                val animExpr = when (o.animationType) {
+                    "slide_in" -> {
+                        // Slide from bottom for 0.5s
+                        val start = o.startSec
+                        val dur = 0.5f
+                        "x=0:y='if(between(t,$start,${start+dur}), H-(H-0)*((t-$start)/$dur), 0)'"
+                    }
+                    "zoom_fade" -> {
+                        // Simple alpha fade in 0.5s
+                        val start = o.startSec
+                        val dur = 0.5f
+                        "alpha='if(between(t,$start,${start+dur}), (t-$start)/$dur, 1)'"
+                    }
+                    "typewriter" -> {
+                        // Typewriter handled via pre-rendered PNG frames? No, too complex.
+                        // FFmpeg overlay doesn't support changing the image over time easily.
+                        // For MVP, we use a simple 'pop' fade.
+                        "alpha='if(lt(t,${o.startSec + 0.1}), 0, 1)'"
+                    }
                     else -> ""
                 }
-                sb.append("${label}[${i + 1}:v]overlay=0:0:shortest=1$enable$next;")
+
+                val baseOverlay = if (animExpr.contains("x=") || animExpr.contains("y=")) "overlay=shortest=1" else "overlay=0:0:shortest=1"
+                val opts = if (animExpr.isNotEmpty()) ":$animExpr" else ""
+                sb.append("${label}[${i + 1}:v]${baseOverlay}:enable='$enable'$opts$next;")
                 label = next
             }
             val fc = sb.toString().trimEnd(';')

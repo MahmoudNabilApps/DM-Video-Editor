@@ -96,7 +96,8 @@ data class TextOverlay(
     var normalizedX: Float = 0.5f,
     var normalizedY: Float = 0.8f,
     var textScale: Float = 1.0f,
-    var textRotation: Float = 0f
+    var textRotation: Float = 0f,
+    var animationType: String = "none" // none, slide_in, zoom_fade, typewriter
 ) : Parcelable
 
 

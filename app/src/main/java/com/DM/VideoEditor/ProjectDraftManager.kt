@@ -82,6 +82,7 @@ object ProjectDraftManager {
                 put("normalizedY",  o.normalizedY.toDouble())
                 put("textScale",    o.textScale.toDouble())
                 put("textRotation", o.textRotation.toDouble())
+                put("animationType", o.animationType)
             })
         }
 
@@ -185,7 +186,8 @@ object ProjectDraftManager {
                 normalizedX  = o.getDouble("normalizedX").toFloat(),
                 normalizedY  = o.getDouble("normalizedY").toFloat(),
                 textScale    = o.getDouble("textScale").toFloat(),
-                textRotation = o.getDouble("textRotation").toFloat()
+                textRotation = o.getDouble("textRotation").toFloat(),
+                animationType = o.optString("animationType", "none")
             )
         }
 

@@ -13,6 +13,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.android.material.slider.Slider
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.Dispatchers
@@ -129,15 +130,53 @@ internal fun VideoEditingActivity.showVolumeSheet(idx: Int) {
             override fun onStopTrackingTouch(s: SeekBar?) {}
         })
     }.also { container.addView(it) }
+        // REQ-AudioPro: Audio Fade In/Out
+        TextView(this).apply {
+            text = "🔊 " + getString(R.string.audio_fade)
+            textSize = 15f; setTextColor(Color.WHITE); setPadding(0, 24, 0, 8)
+        }.also { container.addView(it) }
+
+        fun addFadeSlider(labelRes: Int, initialMs: Long, onMsChanged: (Long) -> Unit) {
+            TextView(this).apply {
+                text = getString(labelRes); textSize = 12f; setTextColor(editorColor(R.color.colorTextMuted))
+            }.also { container.addView(it) }
+            val tvVal = TextView(this).apply {
+                text = getString(R.string.fade_duration, initialMs / 1000f); textSize = 11f; setTextColor(editorColor(R.color.colorAccentOrange))
+            }.also { container.addView(it) }
+            Slider(this).apply {
+                valueFrom = 0f; valueTo = 5f; stepSize = 0.1f; value = (initialMs / 1000f).coerceIn(0f, 5f)
+                addOnChangeListener { _, v, _ ->
+                    tvVal.text = getString(R.string.fade_duration, v)
+                    onMsChanged((v * 1000).toLong())
+                }
+            }.also { container.addView(it) }
+        }
+
+        var newFadeIn  = clips[idx].audioFadeInMs
+        var newFadeOut = clips[idx].audioFadeOutMs
+
+        addFadeSlider(R.string.fade_in, newFadeIn) { newFadeIn = it }
+        addFadeSlider(R.string.fade_out, newFadeOut) { newFadeOut = it }
+
     Button(this).apply {
         text = getString(R.string.btn_apply)
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = 20 }
         setOnClickListener {
-            // REQ-7: coerce volume to 0–200 %
             val pct = sb.progress.coerceIn(0, 200)
             val v   = pct / 100f
+                val oldClip = clips[idx].copy()
             clips[idx].volume = v
+                clips[idx].audioFadeInMs = newFadeIn
+                clips[idx].audioFadeOutMs = newFadeOut
+                val newClip = clips[idx].copy()
+
+                undoRedo.register(
+                    undo = { clips[idx] = oldClip; clipAdapter.notifyItemChanged(idx) },
+                    redo = { clips[idx] = newClip; clipAdapter.notifyItemChanged(idx) }
+                )
+
             d.dismiss()
-            adjustVol(v)
+                applyAudioChanges(idx)
         }
     }.also { container.addView(it) }
     d.setContentView(container); d.show()
@@ -245,6 +284,23 @@ internal fun VideoEditingActivity.extractAudio() {
 
 internal fun VideoEditingActivity.adjustVol(f: Float) {
     val safeF = f.coerceIn(0f, 4f)
-    val c = clips.getOrNull(selectedClipIndex) ?: return
-    execFfmpegClipReplace(c.copy(), "vol") { i, o -> "-i \"$i\" -filter:a \"volume=$safeF\" -c:v copy \"$o\" -y" }
+        val idx = selectedClipIndex
+        val c = clips.getOrNull(idx) ?: return
+        val old = c.copy()
+        c.volume = safeF
+        val new = c.copy()
+        undoRedo.register(
+            undo = { clips[idx] = old; clipAdapter.notifyItemChanged(idx) },
+            redo = { clips[idx] = new; clipAdapter.notifyItemChanged(idx) }
+        )
+        applyAudioChanges(idx)
+    }
+
+internal fun VideoEditingActivity.applyAudioChanges(idx: Int) {
+        val clip = clips.getOrNull(idx) ?: return
+        // Non-destructive: We update metadata and refresh preview.
+        // Final baking happens in ExportOrchestrator or when explicitly transcoded.
+        clipAdapter.notifyItemChanged(idx)
+        rebuildTimeline()
+        showSnack(getString(R.string.snack_saved))
 }

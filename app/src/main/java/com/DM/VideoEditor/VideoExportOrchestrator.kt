@@ -214,19 +214,22 @@ class VideoExportOrchestrator(private val context: Context) {
                     else -> "1"
                 }
 
-                // Animation logic
+                // Animation logic (incorporating normalized coordinates)
+                val tx = o.normalizedX * projectW
+                val ty = o.normalizedY * projectH
+
                 val animExpr = when (o.animationType) {
                     "slide_in" -> {
-                        // Slide from bottom for 0.5s
+                        // Slide from bottom (H) to target ty for 0.5s
                         val start = o.startSec
                         val dur = 0.5f
-                        "x=0:y='if(between(t,$start,${start+dur}), H-(H-0)*((t-$start)/$dur), 0)'"
+                        "x=$tx:y='if(between(t,$start,${start+dur}), H-(H-$ty)*((t-$start)/$dur), $ty)'"
                     }
                     "zoom_fade" -> {
-                        // Simple alpha fade in 0.5s
+                        // Simple alpha fade in 0.5s at static position
                         val start = o.startSec
                         val dur = 0.5f
-                        "alpha='if(between(t,$start,${start+dur}), (t-$start)/$dur, 1)'"
+                        "x=$tx:y=$ty:alpha='if(between(t,$start,${start+dur}), (t-$start)/$dur, 1)'"
                     }
                     "typewriter" -> {
                         // Typewriter handled via pre-rendered PNG frames? No, too complex.

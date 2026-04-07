@@ -76,7 +76,9 @@ data class VideoClip(
     var transition: String = "none",
     var speedFactor: Float = 1.0f,
     var filterCmd: String = "",
-    var volume: Float = 1.0f
+    var volume: Float = 1.0f,
+    var audioFadeInMs: Long = 0L,
+    var audioFadeOutMs: Long = 0L
 ) : Parcelable
 
 @Parcelize
@@ -947,10 +949,7 @@ internal fun execFfmpegClipReplace(
                     uri = newUri,
                     durationMs = dur,
                     startTrimMs = 0L,
-                    endTrimMs = 0L,
-                    speedFactor = 1.0f,
-                    filterCmd = "",
-                    volume = 1.0f
+                    endTrimMs = 0L
                 )
                 undoRedo.register(
                     undo = {

@@ -104,6 +104,15 @@ object FFmpegCommandBuilder {
         if (hasSpeed) afParts.add(atempoChain(clip.speedFactor))
         if (hasVolume) afParts.add("volume=${clip.volume}")
 
+        if (clip.audioFadeInMs > 0) {
+            afParts.add("afade=t=in:st=0:d=${clip.audioFadeInMs / 1000.0}")
+        }
+        if (clip.audioFadeOutMs > 0) {
+            val durSec = clip.durationMs / 1000.0
+            val startFadeOut = (durSec - (clip.audioFadeOutMs / 1000.0)).coerceAtLeast(0.0)
+            afParts.add("afade=t=out:st=$startFadeOut:d=${clip.audioFadeOutMs / 1000.0}")
+        }
+
         return when {
             afParts.isNotEmpty() && hasAudio -> {
                 val vfStr = "[0:v]${vfParts.joinToString(",")}[v]"

@@ -61,6 +61,8 @@ object ProjectDraftManager {
                 put("volume",       c.volume.toDouble())
                 put("filterCmd",    c.filterCmd)
                 put("transition",   c.transition)
+                put("audioFadeInMs", c.audioFadeInMs)
+                put("audioFadeOutMs", c.audioFadeOutMs)
             })
         }
 
@@ -165,7 +167,9 @@ object ProjectDraftManager {
                 speedFactor  = c.getDouble("speedFactor").toFloat(),
                 volume       = c.getDouble("volume").toFloat(),
                 filterCmd    = c.optString("filterCmd", ""),
-                transition   = c.optString("transition", "none")
+                transition   = c.optString("transition", "none"),
+                audioFadeInMs = c.optLong("audioFadeInMs", 0L),
+                audioFadeOutMs = c.optLong("audioFadeOutMs", 0L)
             )
         }
 

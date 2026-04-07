@@ -289,5 +289,7 @@
     <string name="smoothness">Smoothness</string>
     <string name="key_color">Key Color</string>
     <string name="select_bg_image">Select Background Image</string>
+    <string name="audio_ducking">Audio Ducking</string>
+    <string name="ducking_active">Music lowers when clips speak</string>
 </resources>
 

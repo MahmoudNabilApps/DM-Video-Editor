@@ -66,6 +66,8 @@ object ProjectDraftManager {
                 put("chromaKeyColor", c.chromaKeyColor ?: "")
                 put("chromaSimilarity", c.chromaSimilarity.toDouble())
                 put("chromaSmoothness", c.chromaSmoothness.toDouble())
+                put("overlayEffect", c.overlayEffect ?: "")
+                put("speedRamp", c.speedRamp ?: "")
             })
         }
 
@@ -95,6 +97,7 @@ object ProjectDraftManager {
             put("id",               id)
             put("name",             name)
             put("savedAt",          System.currentTimeMillis())
+            put("isAudioDuckingEnabled", (ctx as? VideoEditingActivity)?.isAudioDuckingEnabled ?: false)
             put("clips",            clipsArr)
             put("textOverlays",     overlaysArr)
             put("projectAudioUri",  projectAudioUri?.toString() ?: "")
@@ -112,7 +115,8 @@ object ProjectDraftManager {
         val savedAt: Long,
         val clips: List<VideoClip>,
         val textOverlays: List<TextOverlay>,
-        val projectAudioUri: Uri?
+        val projectAudioUri: Uri?,
+        val isAudioDuckingEnabled: Boolean = false
     )
 
     fun load(ctx: Context, id: String): DraftData? {
@@ -175,7 +179,9 @@ object ProjectDraftManager {
                 audioFadeOutMs = c.optLong("audioFadeOutMs", 0L),
                 chromaKeyColor = c.optString("chromaKeyColor", "").takeIf { it.isNotBlank() },
                 chromaSimilarity = c.optDouble("chromaSimilarity", 0.1).toFloat(),
-                chromaSmoothness = c.optDouble("chromaSmoothness", 0.05).toFloat()
+                chromaSmoothness = c.optDouble("chromaSmoothness", 0.05).toFloat(),
+                overlayEffect = c.optString("overlayEffect", "").takeIf { it.isNotBlank() },
+                speedRamp = c.optString("speedRamp", "").takeIf { it.isNotBlank() }
             )
         }
 
@@ -204,13 +210,16 @@ object ProjectDraftManager {
         val audioUriStr = root.optString("projectAudioUri", "")
         val audioUri = if (audioUriStr.isNotBlank()) Uri.parse(audioUriStr) else null
 
+        val isDucking = root.optBoolean("isAudioDuckingEnabled", false)
+
         return DraftData(
             id              = root.getString("id"),
             name            = root.getString("name"),
             savedAt         = root.getLong("savedAt"),
             clips           = clips,
             textOverlays    = overlays,
-            projectAudioUri = audioUri
+            projectAudioUri = audioUri,
+            isAudioDuckingEnabled = isDucking
         )
     }
 }

@@ -97,12 +97,23 @@ object FFmpegCommandBuilder {
         }
 
         // Video filter chain — always includes scale+pad for uniform resolution
+        // Video filter chain — always includes scale+pad for uniform resolution
         val scaleFilter = "${chromaFilter}scale=${targetW}:${targetH}:force_original_aspect_ratio=decrease," +
                           "pad=${targetW}:${targetH}:(ow-iw)/2:(oh-ih)/2:color=${padColor}," +
                           "setsar=1,fps=30,format=yuv420p"
 
         val vfParts = mutableListOf<String>()
-        if (hasSpeed) vfParts.add("setpts=${1f / clip.speedFactor}*PTS")
+        if (clip.speedRamp != null) {
+            val ramp = when (clip.speedRamp) {
+                "slow_fast" -> "setpts='if(lt(t,0.5), 2*PTS, 0.5*PTS)'"
+                "fast_slow" -> "setpts='if(lt(t,0.5), 0.5*PTS, 2*PTS)'"
+                else -> "setpts=${1f / clip.speedFactor}*PTS"
+            }
+            vfParts.add(ramp)
+        } else if (hasSpeed) {
+            vfParts.add("setpts=${1f / clip.speedFactor}*PTS")
+        }
+
         if (hasFilter) vfParts.add(clip.filterCmd)
         vfParts.add(scaleFilter)   // always last
 

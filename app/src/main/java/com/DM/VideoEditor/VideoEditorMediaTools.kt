@@ -183,22 +183,28 @@ internal fun VideoEditingActivity.showVolumeSheet(idx: Int) {
 }
 
 internal fun VideoEditingActivity.showAudioSheet() {
-    MaterialAlertDialogBuilder(this).setTitle(R.string.audio_sheet_title)
-        .setItems(arrayOf(
-            "🎵 Add Background Music",
-            "🔇 Mute Video",
-            "🎙 Extract Audio as MP3",
+        val items = arrayOf(
+            "🎵 " + getString(R.string.add_audio),
+            "🔇 " + getString(R.string.mute_audio),
+            "🎙 " + getString(R.string.extract_audio),
+            "🔉 " + getString(R.string.audio_ducking) + (if (isAudioDuckingEnabled) " [ON]" else " [OFF]"),
             "🔊 Volume ×2",
             "🔉 Volume ×0.5",
-            "🎛 Custom Volume Level"
-        )) { _, w ->
+            "🎛 " + getString(R.string.tool_volume)
+        )
+    MaterialAlertDialogBuilder(this).setTitle(R.string.audio_sheet_title)
+            .setItems(items) { _, w ->
             when (w) {
                 0 -> audioPickerLauncher.launch("audio/*")
                 1 -> muteVideo()
                 2 -> extractAudio()
-                3 -> adjustVol(2f)
-                4 -> adjustVol(0.5f)
-                5 -> showVolumeSheet(selectedClipIndex)
+                    3 -> {
+                        isAudioDuckingEnabled = !isAudioDuckingEnabled
+                        showSnack(if (isAudioDuckingEnabled) getString(R.string.ducking_active) else "Ducking OFF")
+                    }
+                    4 -> adjustVol(2f)
+                    5 -> adjustVol(0.5f)
+                    6 -> showVolumeSheet(selectedClipIndex)
             }
         }.show()
 }

@@ -815,3 +815,58 @@ internal fun VideoEditingActivity.applyChromaKeyFilter(idx: Int) {
     val filter = "chromakey=0x${color}:${sim}:${smooth}"
     applyFilter(filter)
 }
+
+internal fun VideoEditingActivity.showOverlaySheet() {
+    val clip = clips.getOrNull(selectedClipIndex) ?: return
+    val d = BottomSheetDialog(this)
+    val root = LinearLayout(this).apply {
+        orientation = LinearLayout.VERTICAL
+        setBackgroundColor(editorColor(R.color.colorSheetBackground))
+        setPadding(32, 32, 32, 60)
+    }
+
+    TextView(this).apply {
+        text = "🎬 تأثيرات التراكب (Video Overlays)"
+        textSize = 18f; setTextColor(Color.WHITE); setTypeface(null, Typeface.BOLD)
+        setPadding(0, 0, 0, 16)
+    }.also { root.addView(it) }
+
+    val rv = RecyclerView(this).apply {
+        layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, this@showOverlaySheet.run { 320.dp })
+        layoutManager = GridLayoutManager(this@showOverlaySheet, 3)
+    }
+
+    val effects = OverlayEffect.getAll()
+    rv.adapter = OverlaySelectorAdapter(effects, clip.overlayEffect) { e ->
+        clip.overlayEffect = e.filter
+        applyOverlayEffect(selectedClipIndex)
+        showSnack("✓ تم تطبيق: ${e.label}")
+    }
+    root.addView(rv)
+
+    MaterialButton(this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+        text = getString(R.string.btn_apply_to_all)
+        setTextColor(editorColor(R.color.colorAccentOrange))
+        layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = 20 }
+        setOnClickListener {
+            val currentEff = clip.overlayEffect
+            val backups = clips.map { it.overlayEffect }
+            clips.forEach { it.overlayEffect = currentEff }
+            clipAdapter.notifyDataSetChanged()
+            undoRedo.commit(
+                undo = { backups.forEachIndexed { i, s -> clips[i].overlayEffect = s }; clipAdapter.notifyDataSetChanged() },
+                redo = { clips.forEach { it.overlayEffect = currentEff }; clipAdapter.notifyDataSetChanged() }
+            )
+            d.dismiss()
+            showSnack(getString(R.string.snack_applied_to_all))
+        }
+    }.also { root.addView(it) }
+
+    d.setContentView(root); d.show()
+}
+
+internal fun VideoEditingActivity.applyOverlayEffect(idx: Int) {
+    val clip = clips.getOrNull(idx) ?: return
+    val filter = clip.overlayEffect ?: ""
+    applyFilter(filter) // Re-uses the existing filter application logic
+}

@@ -282,5 +282,7 @@
     <string name="smoothness">النعومة</string>
     <string name="key_color">لون الكروما</string>
     <string name="select_bg_image">اختر صورة الخلفية</string>
+    <string name="audio_ducking">تخفيض الصوت الذكي (Ducking)</string>
+    <string name="ducking_active">خفض الموسيقى تلقائياً عند وجود صوت</string>
 </resources>
 

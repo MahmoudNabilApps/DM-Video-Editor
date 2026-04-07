@@ -81,7 +81,9 @@ data class VideoClip(
     var audioFadeOutMs: Long = 0L,
     var chromaKeyColor: String? = null, // e.g. "00FF00"
     var chromaSimilarity: Float = 0.1f,
-    var chromaSmoothness: Float = 0.05f
+    var chromaSmoothness: Float = 0.05f,
+    var overlayEffect: String? = null, // e.g. "film_grain", "old_film"
+    var speedRamp: String? = null // e.g. "slow_fast", "fast_slow"
 ) : Parcelable
 
 @Parcelize
@@ -151,6 +153,9 @@ class VideoEditingActivity : AppCompatActivity() {
 
     // Category toolbar state
     internal var currentCategory = "edit"
+
+    // Audio Ducking state
+    internal var isAudioDuckingEnabled = false
 
     // PIP state
     internal var pipPosition = 0 // 0=TR, 1=TL, 2=BR, 3=BL, 4=Center
@@ -265,6 +270,7 @@ class VideoEditingActivity : AppCompatActivity() {
                     textOverlays.clear()
                     textOverlays.addAll(draft.textOverlays)
                     draft.projectAudioUri?.let { projectAudioUri = it }
+                    isAudioDuckingEnabled = draft.isAudioDuckingEnabled
                     withContext(Dispatchers.IO) {
                         clips.forEach { clip ->
                             if (clip.durationMs <= 0L) {
@@ -615,6 +621,7 @@ internal fun populateSubTools(cat: String) {
                     if (clips.size < 2) showSnack(getString(R.string.snack_add_two_clips_for_transitions))
                     else showTransitionSheet(selectedClipIndex)
                 }
+                addSubTool("🎭", "تراكب") { showOverlaySheet() }
                 addSubTool("💚", "كروما")    { showChromaKeySheet() }
                 addSubTool("✨", "توهج")       { applyEffectPreset("glow") }
                 addSubTool("📺", "ريترو")      { applyEffectPreset("retro") }

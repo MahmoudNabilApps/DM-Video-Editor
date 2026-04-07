@@ -9,5 +9,7 @@ data class ExportJob(
     val textOverlays: ArrayList<TextOverlay>,
     val scaleFilter: String,
     val totalDurationMs: Long,
-    val videoQuality: Int
+    val videoQuality: Int,
+    val isAudioDuckingEnabled: Boolean = false,
+    val projectAudioUri: String? = null
 ) : Parcelable

@@ -65,13 +65,31 @@ class VideoExportOrchestrator(private val context: Context) {
             val finalOut = getOutputFile("DM_Video_${System.currentTimeMillis()}")
             val scaleVf = if (scaleFilter.isNotBlank()) "-vf \"$scaleFilter\"" else ""
             val qv = job.videoQuality
+            val ducking = job.isAudioDuckingEnabled
+            val bgMusic = job.projectAudioUri
 
             // Fallback check for libx264 (GPL) availability in the specific FFmpeg build
             val encoder = if (FFmpegCommandBuilder.isEncoderAvailable("libx264")) "libx264" else "mpeg4"
             val qualityArgs = if (encoder == "libx264") "-preset superfast -crf $qv" else "-q:v $qv"
 
+            var finalInput = withText
+            var audioFilter = ""
+            var additionalInputs = ""
+
+            if (bgMusic != null) {
+                val localMusic = materializeLocalPath(Uri.parse(bgMusic))
+                if (localMusic != null) {
+                    additionalInputs = "-i \"$localMusic\" "
+                    audioFilter = if (ducking) {
+                        "-filter_complex \"[0:a]asplit[a1][a2];[1:a][a1]sidechaincompress=threshold=0.1:ratio=20[bg];[a2][bg]amix=inputs=2:duration=first[aout]\" -map 0:v -map \"[aout]\""
+                    } else {
+                        "-filter_complex \"[0:a][1:a]amix=inputs=2:duration=first[aout]\" -map 0:v -map \"[aout]\""
+                    }
+                }
+            }
+
             val cmd =
-                "-i \"${withText.absolutePath}\" $scaleVf -c:v $encoder $qualityArgs -c:a aac -b:a 128k -movflags +faststart \"${finalOut.absolutePath}\" -y"
+                "-i \"${finalInput.absolutePath}\" $additionalInputs $scaleVf -c:v $encoder $qualityArgs $audioFilter -c:a aac -b:a 128k -movflags +faststart \"${finalOut.absolutePath}\" -y"
 
             val semaphore = Semaphore(0)
             var finalEncodeOk = false
@@ -236,6 +254,13 @@ class VideoExportOrchestrator(private val context: Context) {
                         val dur = 0.5f
                         "x=$tx:y=$ty:alpha='if(between(t,$start,${start+dur}), (t-$start)/$dur, 1)'"
                     }
+                    "lower_third" -> {
+                        // Slides in from left at bottom, with fixed Y (overrides user Y for template feel)
+                        val start = o.startSec
+                        val dur = 0.6f
+                        val targetY = projectH * 0.85f
+                        "x='if(between(t,$start,${start+dur}), -w+(w+$tx)*((t-$start)/$dur), $tx)':y=$targetY"
+                    }
                     "typewriter" -> {
                         // Typewriter handled via pre-rendered PNG frames? No, too complex.
                         // FFmpeg overlay doesn't support changing the image over time easily.
@@ -253,7 +278,7 @@ class VideoExportOrchestrator(private val context: Context) {
             val fc = sb.toString().trimEnd(';')
             val withAudio = FFmpegCommandBuilder.hasAudioStream(input.absolutePath)
             val audioOpts = if (withAudio) "-map 0:a -c:a copy" else "-an"
-            val cmd = "$inputArgs-filter_complex \"$fc\" -map \"[vout]\" -c:v mpeg4 -q:v 3 $audioOpts \"${out.absolutePath}\" -y"
+            val cmd = "$inputArgs-filter_complex \"$fc\" -map \"[vout]\" -c:v libx264 -preset superfast -crf 23 $audioOpts \"${out.absolutePath}\" -y"
             val ovResult = FfmpegExecutor.executeSync(cmd)
             return if (FfmpegExecutor.isSuccess(ovResult) && out.exists() && out.length() > 0) out
             else {

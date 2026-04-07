@@ -109,7 +109,15 @@ internal fun VideoEditingActivity.showExportQualityDialog() {
         d.show()
     }
 internal fun VideoEditingActivity.startExport(scaleFilter: String, totalDurationMs: Long, qv: Int = 3) {
-        val job = ExportJob(ArrayList(clips), ArrayList(textOverlays), scaleFilter, totalDurationMs, qv)
+        val job = ExportJob(
+            clips = ArrayList(clips),
+            textOverlays = ArrayList(textOverlays),
+            scaleFilter = scaleFilter,
+            totalDurationMs = totalDurationMs,
+            videoQuality = qv,
+            isAudioDuckingEnabled = isAudioDuckingEnabled,
+            projectAudioUri = projectAudioUri?.toString()
+        )
         ExportForegroundService.start(this, job)
         showSnack(getString(R.string.export_started_snackbar))
     }

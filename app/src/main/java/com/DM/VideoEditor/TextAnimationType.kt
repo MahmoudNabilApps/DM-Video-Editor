@@ -15,7 +15,8 @@ data class TextAnimationType(
             TextAnimationType("Zoom Fade", "zoom_fade",  "🔍"),
             TextAnimationType("Typewriter","typewriter", "⌨️"),
             TextAnimationType("Bounce",    "bounce",     "⚽"),
-            TextAnimationType("Flash",     "flash",      "⚡")
+            TextAnimationType("Flash",     "flash",      "⚡"),
+            TextAnimationType("Lower 1/3", "lower_third", "📛")
         )
     }
 }

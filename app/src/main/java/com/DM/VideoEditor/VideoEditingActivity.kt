@@ -185,6 +185,10 @@ class VideoEditingActivity : AppCompatActivity() {
     internal val replaceClipLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         uri?.let { replaceCurrentClip(it) }
     }
+    internal var splitScreenMode: Int = 0 // 0=None, 1=H, 2=V, 3=Quad
+    internal val splitScreenPicker = registerForActivityResult(ActivityResultContracts.GetMultipleContents()) { uris ->
+        if (uris.isNotEmpty()) applySplitScreen(uris)
+    }
 
     private val exportFinishedReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -656,6 +660,7 @@ internal fun populateSubTools(cat: String) {
                 addSubTool("📐", "النسبة")      { showCropSheet() }
                 addSubTool("📱", "PIP")        { showPipSheet() }
                 addSubTool("➕", "إضافة مقطع")   { addVideoLauncher.launch("video/*") }
+                addSubTool("🔲", "تقسيم الشاشة") { showSplitScreenSheet() }
             }
         }
     }

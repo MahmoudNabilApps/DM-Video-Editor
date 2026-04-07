@@ -270,7 +270,7 @@ class VideoExportOrchestrator(private val context: Context) {
                     else -> ""
                 }
 
-                val baseOverlay = if (animExpr.contains("x=") || animExpr.contains("y=")) "overlay=shortest=1" else "overlay=0:0:shortest=1"
+                val baseOverlay = if (animExpr.contains("x=") || animExpr.contains("y=")) "overlay=shortest=1" else "overlay=$tx:$ty:shortest=1"
                 val opts = if (animExpr.isNotEmpty()) ":$animExpr" else ""
                 sb.append("${label}[${i + 1}:v]${baseOverlay}:enable='$enable'$opts$next;")
                 label = next

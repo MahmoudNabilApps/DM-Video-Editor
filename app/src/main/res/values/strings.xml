@@ -291,5 +291,10 @@
     <string name="select_bg_image">Select Background Image</string>
     <string name="audio_ducking">Audio Ducking</string>
     <string name="ducking_active">Music lowers when clips speak</string>
+    <string name="split_screen">Split Screen</string>
+    <string name="split_side_by_side">Side by Side</string>
+    <string name="split_top_bottom">Top &amp; Bottom</string>
+    <string name="split_quad">Quad Grid (2x2)</string>
+    <string name="select_second_video">Select Second Video</string>
 </resources>
 

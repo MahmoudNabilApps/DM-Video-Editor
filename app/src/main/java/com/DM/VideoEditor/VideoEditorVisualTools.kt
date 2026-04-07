@@ -659,9 +659,15 @@ internal fun VideoEditingActivity.showNoiseReduceSheet() {
 // ── STABILIZE ──────────────────────────────────────────────
 internal fun VideoEditingActivity.showStabilizeSheet() {
     val act = this
-    MaterialAlertDialogBuilder(act).setTitle(R.string.stabilize)
-        .setMessage(R.string.stabilize_description)
-        .setPositiveButton(R.string.btn_apply) { _, _ ->
+    MaterialAlertDialogBuilder(act).setTitle("📷 تثبيت الصورة المتقدم (Advanced Stabilization)")
+        .setMessage("يقدم وضع التثبيت المتقدم نتائج أفضل لتقليل اهتزاز الكاميرا بشكل طبيعي.\n\n" + getString(R.string.stabilize_description))
+        .setPositiveButton("تثبيت ذكي (Smart)") { _, _ ->
+            // Use vidstabdetect + vidstabtransform equivalent via deshake for immediate single-pass results
+            // but with professional parameters.
+            applyFilter("deshake=edge=mirror:blocksize=16:contrast=125:search=64")
+            showSnack(getString(R.string.snack_stabilizing_video))
+        }
+        .setNeutralButton("تثبيت سريع (Fast)") { _, _ ->
             applyFilter("deshake=x=-1:y=-1:w=-1:h=-1:rx=64:ry=64")
             showSnack(getString(R.string.snack_stabilizing_video))
         }
@@ -869,4 +875,81 @@ internal fun VideoEditingActivity.applyOverlayEffect(idx: Int) {
     val clip = clips.getOrNull(idx) ?: return
     val filter = clip.overlayEffect ?: ""
     applyFilter(filter) // Re-uses the existing filter application logic
+}
+
+internal fun VideoEditingActivity.showSplitScreenSheet() {
+    val d = BottomSheetDialog(this)
+    val root = LinearLayout(this).apply {
+        orientation = LinearLayout.VERTICAL; setBackgroundColor(editorColor(R.color.colorSheetBackground))
+        setPadding(32, 32, 32, 60)
+    }
+    TextView(this).apply { text = "🔲 " + getString(R.string.split_screen); textSize = 18f; setTextColor(Color.WHITE); setTypeface(null, Typeface.BOLD); setPadding(0, 0, 0, 20) }.also { root.addView(it) }
+
+    fun addOption(label: String, icon: String, mode: Int) {
+        LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL
+            setPadding(16, 16, 16, 16); setBackgroundColor(editorColor(R.color.colorCardDark))
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { bottomMargin = 8 }
+            isClickable = true; isFocusable = true
+            addView(TextView(this@showSplitScreenSheet).apply { text = icon; textSize = 24f; setPadding(0, 0, 16, 0) })
+            addView(TextView(this@showSplitScreenSheet).apply { text = label; textSize = 16f; setTextColor(Color.WHITE); layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f) })
+            setOnClickListener { d.dismiss(); splitScreenMode = mode; splitScreenPicker.launch("video/*") }
+        }.also { root.addView(it) }
+    }
+
+    addOption(getString(R.string.split_side_by_side), "🌓", 1)
+    addOption(getString(R.string.split_top_bottom), "➗", 2)
+    addOption(getString(R.string.split_quad), "田", 3)
+
+    d.setContentView(root); d.show()
+}
+
+internal fun VideoEditingActivity.applySplitScreen(uris: List<Uri>) {
+    if (uris.isEmpty()) return
+    val idx = selectedClipIndex
+    val clip = clips.getOrNull(idx) ?: return
+    val baseline = clip.copy()
+
+    lifecycleScope.launch {
+        showLoading(true)
+        try {
+            val mainIn = withContext(Dispatchers.IO) { materializeLocalPath(clip.uri) } ?: return@launch
+            val secondIn = withContext(Dispatchers.IO) { materializeLocalPath(uris[0]) } ?: return@launch
+            val out = getOutputFile("split_screen")
+
+            // FFmpeg Split Screen Logic
+            val filter = when (splitScreenMode) {
+                1 -> "[0:v]scale=iw/2:ih[v0];[1:v]scale=iw/2:ih[v1];[v0][v1]hstack=inputs=2"
+                2 -> "[0:v]scale=iw:ih/2[v0];[1:v]scale=iw:ih/2[v1];[v0][v1]vstack=inputs=2"
+                3 -> {
+                    val thirdIn = if (uris.size > 1) withContext(Dispatchers.IO) { materializeLocalPath(uris[1]) } else mainIn
+                    val fourthIn = if (uris.size > 2) withContext(Dispatchers.IO) { materializeLocalPath(uris[2]) } else mainIn
+                    "-i \"$thirdIn\" -i \"$fourthIn\" -filter_complex \"[0:v]scale=iw/2:ih/2[v0];[1:v]scale=iw/2:ih/2[v1];[2:v]scale=iw/2:ih/2[v2];[3:v]scale=iw/2:ih/2[v3];[v0][v1][v2][v3]xstack=inputs=4:layout=0_0|w0_0|0_h0|w0_h0\""
+                }
+                else -> ""
+            }
+
+            val cmd = if (splitScreenMode == 3) {
+                 "-i \"$mainIn\" -i \"$secondIn\" $filter -c:a copy \"${out.absolutePath}\" -y"
+            } else {
+                 "-i \"$mainIn\" -i \"$secondIn\" -filter_complex \"$filter\" -c:a copy \"${out.absolutePath}\" -y"
+            }
+
+            val result = withContext(Dispatchers.IO) { FfmpegExecutor.executeSync(cmd) }
+            if (FfmpegExecutor.isSuccess(result)) {
+                val newUri = Uri.fromFile(out)
+                val dur = withContext(Dispatchers.IO) { getClipDurationMs(newUri) }
+                val newClip = baseline.copy(uri = newUri, durationMs = dur, startTrimMs = 0L, endTrimMs = 0L)
+                withContext(Dispatchers.Main) {
+                    clips[idx] = newClip
+                    clipAdapter.notifyItemChanged(idx)
+                    reloadPlaylist(maintainPosition = true, targetIdx = idx)
+                    rebuildTimeline(); loadThumb(idx)
+                    showSnack("✓ Split screen applied")
+                }
+            }
+        } finally {
+            showLoading(false)
+        }
+    }
 }

@@ -63,6 +63,9 @@ object ProjectDraftManager {
                 put("transition",   c.transition)
                 put("audioFadeInMs", c.audioFadeInMs)
                 put("audioFadeOutMs", c.audioFadeOutMs)
+                put("chromaKeyColor", c.chromaKeyColor ?: "")
+                put("chromaSimilarity", c.chromaSimilarity.toDouble())
+                put("chromaSmoothness", c.chromaSmoothness.toDouble())
             })
         }
 
@@ -169,7 +172,10 @@ object ProjectDraftManager {
                 filterCmd    = c.optString("filterCmd", ""),
                 transition   = c.optString("transition", "none"),
                 audioFadeInMs = c.optLong("audioFadeInMs", 0L),
-                audioFadeOutMs = c.optLong("audioFadeOutMs", 0L)
+                audioFadeOutMs = c.optLong("audioFadeOutMs", 0L),
+                chromaKeyColor = c.optString("chromaKeyColor", "").takeIf { it.isNotBlank() },
+                chromaSimilarity = c.optDouble("chromaSimilarity", 0.1).toFloat(),
+                chromaSmoothness = c.optDouble("chromaSmoothness", 0.05).toFloat()
             )
         }
 

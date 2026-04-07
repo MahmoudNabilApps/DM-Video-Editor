@@ -78,7 +78,10 @@ data class VideoClip(
     var filterCmd: String = "",
     var volume: Float = 1.0f,
     var audioFadeInMs: Long = 0L,
-    var audioFadeOutMs: Long = 0L
+    var audioFadeOutMs: Long = 0L,
+    var chromaKeyColor: String? = null, // e.g. "00FF00"
+    var chromaSimilarity: Float = 0.1f,
+    var chromaSmoothness: Float = 0.05f
 ) : Parcelable
 
 @Parcelize
@@ -612,6 +615,7 @@ internal fun populateSubTools(cat: String) {
                     if (clips.size < 2) showSnack(getString(R.string.snack_add_two_clips_for_transitions))
                     else showTransitionSheet(selectedClipIndex)
                 }
+                addSubTool("💚", "كروما")    { showChromaKeySheet() }
                 addSubTool("✨", "توهج")       { applyEffectPreset("glow") }
                 addSubTool("📺", "ريترو")      { applyEffectPreset("retro") }
                 addSubTool("🎬", "سينمائي")  { applyEffectPreset("cinematic") }

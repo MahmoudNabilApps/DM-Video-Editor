@@ -284,5 +284,10 @@
     <string name="fade_in">Fade In</string>
     <string name="fade_out">Fade Out</string>
     <string name="fade_duration">%1$.1f s</string>
+    <string name="chroma_key">Chroma Key</string>
+    <string name="similarity">Similarity</string>
+    <string name="smoothness">Smoothness</string>
+    <string name="key_color">Key Color</string>
+    <string name="select_bg_image">Select Background Image</string>
 </resources>
 

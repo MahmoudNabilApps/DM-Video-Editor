@@ -744,3 +744,74 @@ internal fun VideoEditingActivity.applyEffectPreset(name: String) {
     applyFilter(filter); showSnack(getString(R.string.snack_applying_effect, name))
 }
 
+internal fun VideoEditingActivity.showChromaKeySheet() {
+    val idx = selectedClipIndex
+    val clip = clips.getOrNull(idx) ?: return
+    val d = BottomSheetDialog(this)
+    val root = LinearLayout(this).apply {
+        orientation = LinearLayout.VERTICAL; setBackgroundColor(editorColor(R.color.colorSheetBackground))
+        setPadding(32, 32, 32, 60)
+    }
+
+    TextView(this).apply {
+        text = "💚 " + getString(R.string.chroma_key); textSize = 18f; setTextColor(Color.WHITE); setTypeface(null, Typeface.BOLD)
+        setPadding(0, 0, 0, 16)
+    }.also { root.addView(it) }
+
+    // Key Color Selection
+    TextView(this).apply { text = getString(R.string.key_color); textSize = 12f; setTextColor(editorColor(R.color.colorTextMuted)) }.also { root.addView(it) }
+    val colorRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; setPadding(0, 8, 0, 16) }
+    val colors = mapOf("Green" to "00FF00", "Blue" to "0000FF", "Red" to "FF0000")
+    var selectedColor = clip.chromaKeyColor ?: "00FF00"
+
+    colors.forEach { (name, hex) ->
+        MaterialButton(this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+            text = name; layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+            setOnClickListener { selectedColor = hex; showSnack("Selected: $name") }
+        }.also { colorRow.addView(it) }
+    }
+    root.addView(colorRow)
+
+    // Similarity Slider
+    TextView(this).apply { text = getString(R.string.similarity); textSize = 12f; setTextColor(editorColor(R.color.colorTextMuted)) }.also { root.addView(it) }
+    val slSim = Slider(this).apply { valueFrom = 0.01f; valueTo = 1.0f; stepSize = 0.01f; value = clip.chromaSimilarity }
+    root.addView(slSim)
+
+    // Smoothness Slider
+    TextView(this).apply { text = getString(R.string.smoothness); textSize = 12f; setTextColor(editorColor(R.color.colorTextMuted)) }.also { root.addView(it) }
+    val slSmooth = Slider(this).apply { valueFrom = 0.01f; valueTo = 0.5f; stepSize = 0.01f; value = clip.chromaSmoothness }
+    root.addView(slSmooth)
+
+    MaterialButton(this).apply {
+        text = "✓ Apply Chroma Key"; setBackgroundColor(editorColor(R.color.colorAccentOrange)); setTextColor(Color.WHITE)
+        layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = 24 }
+        setOnClickListener {
+            val old = clip.copy()
+            clip.chromaKeyColor = selectedColor
+            clip.chromaSimilarity = slSim.value
+            clip.chromaSmoothness = slSmooth.value
+            val new = clip.copy()
+
+            undoRedo.register(
+                undo = { clips[idx] = old; clipAdapter.notifyItemChanged(idx); rebuildTimeline() },
+                redo = { clips[idx] = new; clipAdapter.notifyItemChanged(idx); rebuildTimeline() }
+            )
+
+            d.dismiss()
+            applyChromaKeyFilter(idx)
+        }
+    }.also { root.addView(it) }
+
+    d.setContentView(root); d.show()
+}
+
+internal fun VideoEditingActivity.applyChromaKeyFilter(idx: Int) {
+    val clip = clips.getOrNull(idx) ?: return
+    val color = clip.chromaKeyColor ?: "00FF00"
+    val sim = clip.chromaSimilarity
+    val smooth = clip.chromaSmoothness
+
+    // Chroma key followed by a default background (black) to show transparency effect
+    val filter = "chromakey=0x${color}:${sim}:${smooth}"
+    applyFilter(filter)
+}

@@ -277,5 +277,10 @@
     <string name="fade_in">دخول تدريجي (Fade In)</string>
     <string name="fade_out">خروج تدريجي (Fade Out)</string>
     <string name="fade_duration">%1$.1f ثانية</string>
+    <string name="chroma_key">إزالة الخلفية (Chroma)</string>
+    <string name="similarity">قوة العزل</string>
+    <string name="smoothness">النعومة</string>
+    <string name="key_color">لون الكروما</string>
+    <string name="select_bg_image">اختر صورة الخلفية</string>
 </resources>
 

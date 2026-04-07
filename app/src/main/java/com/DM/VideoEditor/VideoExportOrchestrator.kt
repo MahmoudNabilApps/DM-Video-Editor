@@ -65,8 +65,13 @@ class VideoExportOrchestrator(private val context: Context) {
             val finalOut = getOutputFile("DM_Video_${System.currentTimeMillis()}")
             val scaleVf = if (scaleFilter.isNotBlank()) "-vf \"$scaleFilter\"" else ""
             val qv = job.videoQuality
+
+            // Fallback check for libx264 (GPL) availability in the specific FFmpeg build
+            val encoder = if (FFmpegCommandBuilder.isEncoderAvailable("libx264")) "libx264" else "mpeg4"
+            val qualityArgs = if (encoder == "libx264") "-preset superfast -crf $qv" else "-q:v $qv"
+
             val cmd =
-                "-i \"${withText.absolutePath}\" $scaleVf -c:v mpeg4 -q:v $qv -c:a aac -b:a 128k -movflags +faststart \"${finalOut.absolutePath}\" -y"
+                "-i \"${withText.absolutePath}\" $scaleVf -c:v $encoder $qualityArgs -c:a aac -b:a 128k -movflags +faststart \"${finalOut.absolutePath}\" -y"
 
             val semaphore = Semaphore(0)
             var finalEncodeOk = false

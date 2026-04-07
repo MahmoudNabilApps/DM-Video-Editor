@@ -90,8 +90,14 @@ object FFmpegCommandBuilder {
 
         val trimArgs = if (hasTrim) "-ss ${clip.startTrimMs / 1000.0} -to ${clip.endTrimMs / 1000.0}" else ""
 
+        // Chroma key support
+        var chromaFilter = ""
+        if (clip.chromaKeyColor != null) {
+            chromaFilter = "chromakey=0x${clip.chromaKeyColor}:${clip.chromaSimilarity}:${clip.chromaSmoothness},"
+        }
+
         // Video filter chain — always includes scale+pad for uniform resolution
-        val scaleFilter = "scale=${targetW}:${targetH}:force_original_aspect_ratio=decrease," +
+        val scaleFilter = "${chromaFilter}scale=${targetW}:${targetH}:force_original_aspect_ratio=decrease," +
                           "pad=${targetW}:${targetH}:(ow-iw)/2:(oh-ih)/2:color=${padColor}," +
                           "setsar=1,fps=30,format=yuv420p"
 
@@ -119,7 +125,7 @@ object FFmpegCommandBuilder {
                 val afStr = "[0:a]${afParts.joinToString(",")}[a]"
                 "$trimArgs -i \"$inputPath\" -filter_complex \"$vfStr;$afStr\" " +
                     "-map \"[v]\" -map \"[a]\" " +
-                    "-c:v mpeg4 -q:v 3 -c:a aac -b:a 128k -ar 44100 " +
+                    "-c:v libx264 -preset superfast -crf 23 -c:a aac -b:a 128k -ar 44100 " +
                     "-movflags +faststart \"$outputPath\" -y"
             }
             afParts.isNotEmpty() && !hasAudio -> {
@@ -127,14 +133,14 @@ object FFmpegCommandBuilder {
                 val vfStr = "[0:v]${vfParts.joinToString(",")}[v]"
                 "$trimArgs -i \"$inputPath\" -filter_complex \"$vfStr\" " +
                     "-map \"[v]\" -an " +
-                    "-c:v mpeg4 -q:v 3 " +
+                    "-c:v libx264 -preset superfast -crf 23 " +
                     "-movflags +faststart \"$outputPath\" -y"
             }
             else -> {
                 val vfStr = vfParts.joinToString(",")
                 val audioOut = if (hasAudio) "-c:a aac -b:a 128k -ar 44100" else "-an"
                 "$trimArgs -i \"$inputPath\" -vf \"$vfStr\" " +
-                    "-c:v mpeg4 -q:v 3 $audioOut " +
+                    "-c:v libx264 -preset superfast -crf 23 $audioOut " +
                     "-movflags +faststart \"$outputPath\" -y"
             }
         }
@@ -200,12 +206,12 @@ object FFmpegCommandBuilder {
         return if (mergeAudio) {
             "$inputArgs -filter_complex \"${sb.trimEnd(';')}\" " +
                 "-map \"[vout]\" -map \"[aout]\" " +
-                "-c:v mpeg4 -q:v 3 -c:a aac -b:a 128k -ar 44100 " +
+                "-c:v libx264 -preset superfast -crf 23 -c:a aac -b:a 128k -ar 44100 " +
                 "-movflags +faststart \"$outputPath\" -y"
         } else {
             "$inputArgs -filter_complex \"${sb.trimEnd(';')}\" " +
                 "-map \"[vout]\" " +
-                "-c:v mpeg4 -q:v 3 -an " +
+                "-c:v libx264 -preset superfast -crf 23 -an " +
                 "-movflags +faststart \"$outputPath\" -y"
         }
     }
@@ -216,9 +222,9 @@ object FFmpegCommandBuilder {
      */
     fun buildConcatCmd(concatListFile: File, outputPath: String, includeAudio: Boolean = true): String {
         val tail = if (includeAudio) {
-            "-c:v mpeg4 -q:v 3 -c:a aac -b:a 128k -ar 44100 -movflags +faststart "
+            "-c:v libx264 -preset superfast -crf 23 -c:a aac -b:a 128k -ar 44100 -movflags +faststart "
         } else {
-            "-c:v mpeg4 -q:v 3 -an -movflags +faststart "
+            "-c:v libx264 -preset superfast -crf 23 -an -movflags +faststart "
         }
         return "-f concat -safe 0 -protocol_whitelist file,crypto,data,saf -i \"${concatListFile.absolutePath}\" " +
             tail + "\"$outputPath\" -y"
@@ -258,7 +264,7 @@ object FFmpegCommandBuilder {
         val fc = sb.toString()
         return "$inputArgs -filter_complex \"$fc\" " +
             "-map \"[vout]\" -map \"[aout]\" " +
-            "-c:v mpeg4 -q:v 3 -c:a aac -b:a 128k -ar 44100 " +
+            "-c:v libx264 -preset superfast -crf 23 -c:a aac -b:a 128k -ar 44100 " +
             "-movflags +faststart \"$outputPath\" -y"
     }
 
@@ -272,6 +278,18 @@ object FFmpegCommandBuilder {
     )
     fun buildDrawtextFilters(overlays: List<TextOverlay>, videoW: Int = 1280, videoH: Int = 720): String {
         throw UnsupportedOperationException("Use TextOverlayBitmapRenderer instead")
+    }
+
+    /**
+     * Check if a specific encoder is available in this FFmpeg build.
+     */
+    fun isEncoderAvailable(encoderName: String): Boolean {
+        return try {
+            val session = com.arthenica.ffmpegkit.FFmpegKit.execute("-encoders")
+            session.allLogsAsString.contains(encoderName)
+        } catch (_: Exception) {
+            false
+        }
     }
 
     /**

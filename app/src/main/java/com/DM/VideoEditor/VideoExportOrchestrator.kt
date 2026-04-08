@@ -211,9 +211,10 @@ class VideoExportOrchestrator(private val context: Context) {
         return if (ok && out.exists() && out.length() > 0L) out else null
     }
 
-    private fun applyTextOverlays(input: File, textOverlays: List<TextOverlay>, stickerOverlays: List<StickerOverlay> = emptyList()): File {
+    private suspend fun applyTextOverlays(input: File, textOverlays: List<TextOverlay>, stickerOverlays: List<StickerOverlay> = emptyList()): File {
         if (textOverlays.isEmpty() && stickerOverlays.isEmpty()) return input
         val pngs = mutableListOf<File>()
+        val stickerDirs = mutableListOf<File>()
         try {
             // Render Text
             for ((idx, o) in textOverlays.withIndex()) {
@@ -224,27 +225,37 @@ class VideoExportOrchestrator(private val context: Context) {
                 }
                 pngs.add(f)
             }
-            // Render Sticker Placeholders (Static for now, per optimization report)
+            // Render Sticker Animation Sequences
             for ((idx, s) in stickerOverlays.withIndex()) {
-                val f = File(app.cacheDir, "sticker_overlay_${idx}_${System.currentTimeMillis()}.png")
-                // In a full implementation, we'd use a Lottie-to-PNG renderer here.
-                // For this pro-suite release, we render a high-res placeholder from the lottie assets if available.
-                TextOverlayBitmapRenderer.renderStickerPlaceholder(s, projectW, projectH, f)
-                pngs.add(f)
+                val dir = File(app.cacheDir, "sticker_frames_${idx}_${System.currentTimeMillis()}")
+                val extracted = LottieFrameExtractor.extractFrames(app, s.lottieUrl, dir, 512, 512, 30)
+                if (extracted != null) {
+                    stickerDirs.add(extracted)
+                } else {
+                    // Fallback to static placeholder if extraction fails
+                    val f = File(app.cacheDir, "sticker_fallback_${idx}.png")
+                    TextOverlayBitmapRenderer.renderStickerPlaceholder(s, projectW, projectH, f)
+                    pngs.add(f)
+                }
             }
 
             val out = getOutputFile("with_overlays")
             val inputArgs = buildString {
                 append("-i \"${input.absolutePath}\" ")
+                // Text overlay inputs (static PNGs)
                 pngs.forEach { append("-loop 1 -i \"${it.absolutePath}\" ") }
+                // Sticker overlay inputs (image sequences)
+                stickerDirs.forEach { append("-framerate 30 -i \"${it.absolutePath}/frame_%04d.png\" ") }
             }
             val sb = StringBuilder()
             var label = "[0:v]"
-            val allOverlaysCount = textOverlays.size + stickerOverlays.size
+            val stickerCount = stickerDirs.size
+            val fallbackStickerCount = pngs.size - textOverlays.size
+            val totalInputsCount = 1 + pngs.size + stickerDirs.size
 
             // Text Overlays
             textOverlays.forEachIndexed { i, o ->
-                val next = if (i == textOverlays.lastIndex) "[vout]" else "[vt$i]"
+                val next = if (i == textOverlays.lastIndex && stickerOverlays.isEmpty()) "[vout]" else "[vt$i]"
                 val enable = when {
                     o.endSec > 0 && o.startSec > 0 -> "between(t,${o.startSec},${o.endSec})"
                     o.endSec > 0 -> "lte(t,${o.endSec})"
@@ -292,8 +303,8 @@ class VideoExportOrchestrator(private val context: Context) {
             }
             // Sticker Overlays (Sequential in the chain)
             stickerOverlays.forEachIndexed { i, s ->
-                val overlayIdx = textOverlays.size + i
-                val next = if (overlayIdx == allOverlaysCount - 1) "[vout]" else "[vt$overlayIdx]"
+                val inputIdx = 1 + pngs.size + i
+                val next = if (i == stickerOverlays.lastIndex) "[vout]" else "[st$i]"
                 val enable = when {
                     s.endSec > 0 && s.startSec > 0 -> "between(t,${s.startSec},${s.endSec})"
                     s.endSec > 0 -> "lte(t,${s.endSec})"
@@ -301,7 +312,9 @@ class VideoExportOrchestrator(private val context: Context) {
                     else -> "1"
                 }
                 val tx = s.normalizedX * projectW; val ty = s.normalizedY * projectH
-                sb.append("${label}[${overlayIdx + 1}:v]overlay=$tx:$ty:shortest=1:enable='$enable'$next;")
+                // For sticker sequences, we use -loop 1 if it's a static fallback, but here we assume stickerDirs matched 1:1 with stickerOverlays order
+                // The input index needs to be carefully mapped. 0:v is video. 1..N:v are PNGs. N+1..M:v are sticker sequences.
+                sb.append("${label}[${inputIdx}:v]overlay=$tx:$ty:shortest=1:enable='$enable'$next;")
                 label = next
             }
 
@@ -317,6 +330,7 @@ class VideoExportOrchestrator(private val context: Context) {
             }
         } finally {
             pngs.forEach { try { it.delete() } catch (_: Exception) {} }
+            stickerDirs.forEach { try { it.deleteRecursively() } catch (_: Exception) {} }
         }
     }
 

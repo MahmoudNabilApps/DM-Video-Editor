@@ -600,6 +600,7 @@ internal fun populateSubTools(cat: String) {
         binding.subToolsContainer.removeAllViews()
         when (cat) {
             "edit" -> {
+                addSubTool("🎬", "إنترو")      { showIntroTemplateSheet() }
                 addSubTool("✂", "قص")       { showTrimSheet() }
                 addSubTool("✂✂", "تقسيم")     { splitClipAtCurrentPosition() }
                 addSubTool("⚡", "السرعة")      { showSpeedSheet() }

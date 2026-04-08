@@ -211,111 +211,122 @@ class VideoExportOrchestrator(private val context: Context) {
         return if (ok && out.exists() && out.length() > 0L) out else null
     }
 
+    private sealed class OverlayInput {
+        data class StaticPng(val file: File, val overlay: Any) : OverlayInput()
+        data class AnimatedSequence(val dir: File, val overlay: StickerOverlay) : OverlayInput()
+    }
+
     private suspend fun applyTextOverlays(input: File, textOverlays: List<TextOverlay>, stickerOverlays: List<StickerOverlay> = emptyList()): File {
         if (textOverlays.isEmpty() && stickerOverlays.isEmpty()) return input
-        val pngs = mutableListOf<File>()
-        val stickerDirs = mutableListOf<File>()
+
+        val inputs = mutableListOf<OverlayInput>()
+
         try {
             // Render Text
             for ((idx, o) in textOverlays.withIndex()) {
                 val f = File(app.cacheDir, "text_overlay_${idx}_${System.currentTimeMillis()}.png")
-                if (!TextOverlayBitmapRenderer.renderToPng(o, projectW, projectH, f)) {
-                    Log.e(TAG, "PNG render failed for text overlay $idx")
-                    continue
+                if (TextOverlayBitmapRenderer.renderToPng(o, projectW, projectH, f)) {
+                    inputs.add(OverlayInput.StaticPng(f, o))
                 }
-                pngs.add(f)
             }
             // Render Sticker Animation Sequences
             for ((idx, s) in stickerOverlays.withIndex()) {
                 val dir = File(app.cacheDir, "sticker_frames_${idx}_${System.currentTimeMillis()}")
                 val extracted = LottieFrameExtractor.extractFrames(app, s.lottieUrl, dir, 512, 512, 30)
                 if (extracted != null) {
-                    stickerDirs.add(extracted)
+                    inputs.add(OverlayInput.AnimatedSequence(dir, s))
                 } else {
                     // Fallback to static placeholder if extraction fails
                     val f = File(app.cacheDir, "sticker_fallback_${idx}.png")
                     TextOverlayBitmapRenderer.renderStickerPlaceholder(s, projectW, projectH, f)
-                    pngs.add(f)
+                    inputs.add(OverlayInput.StaticPng(f, s))
                 }
             }
+
+            if (inputs.isEmpty()) return input
 
             val out = getOutputFile("with_overlays")
             val inputArgs = buildString {
                 append("-i \"${input.absolutePath}\" ")
-                // Text overlay inputs (static PNGs)
-                pngs.forEach { append("-loop 1 -i \"${it.absolutePath}\" ") }
-                // Sticker overlay inputs (image sequences)
-                stickerDirs.forEach { append("-framerate 30 -i \"${it.absolutePath}/frame_%04d.png\" ") }
+                inputs.forEach { inputType ->
+                    when (inputType) {
+                        is OverlayInput.StaticPng -> append("-loop 1 -i \"${inputType.file.absolutePath}\" ")
+                        is OverlayInput.AnimatedSequence -> append("-framerate 30 -i \"${inputType.dir.absolutePath}/frame_%04d.png\" ")
+                    }
+                }
             }
+
             val sb = StringBuilder()
-            var label = "[0:v]"
-            val stickerCount = stickerDirs.size
-            val fallbackStickerCount = pngs.size - textOverlays.size
-            val totalInputsCount = 1 + pngs.size + stickerDirs.size
+            var currentLabel = "[0:v]"
 
-            // Text Overlays
-            textOverlays.forEachIndexed { i, o ->
-                val next = if (i == textOverlays.lastIndex && stickerOverlays.isEmpty()) "[vout]" else "[vt$i]"
-                val enable = when {
-                    o.endSec > 0 && o.startSec > 0 -> "between(t,${o.startSec},${o.endSec})"
-                    o.endSec > 0 -> "lte(t,${o.endSec})"
-                    o.startSec > 0 -> "gte(t,${o.startSec})"
-                    else -> "1"
+            inputs.forEachIndexed { i, overlayInput ->
+                val nextLabel = if (i == inputs.lastIndex) "[vout]" else "[ov$i]"
+                val inputIdx = i + 1
+
+                val (enable, tx, ty, animExpr) = when (overlayInput) {
+                    is OverlayInput.StaticPng -> {
+                        val o = overlayInput.overlay
+                        if (o is TextOverlay) {
+                            val en = when {
+                                o.endSec > 0 && o.startSec > 0 -> "between(t,${o.startSec},${o.endSec})"
+                                o.endSec > 0 -> "lte(t,${o.endSec})"
+                                o.startSec > 0 -> "gte(t,${o.startSec})"
+                                else -> "1"
+                            }
+                            val tx = o.normalizedX * projectW
+                            val ty = o.normalizedY * projectH
+                            val anim = when (o.animationType) {
+                                "slide_in" -> {
+                                    val start = o.startSec
+                                    val dur = 0.5f
+                                    "x=$tx:y='if(between(t,$start,${start+dur}), H-(H-$ty)*((t-$start)/$dur), $ty)'"
+                                }
+                                "zoom_fade" -> {
+                                    val start = o.startSec
+                                    val dur = 0.5f
+                                    "x=$tx:y=$ty:alpha='if(between(t,$start,${start+dur}), (t-$start)/$dur, 1)'"
+                                }
+                                "lower_third" -> {
+                                    val start = o.startSec
+                                    val dur = 0.6f
+                                    val targetY = projectH * 0.85f
+                                    "x='if(between(t,$start,${start+dur}), -w+(w+$tx)*((t-$start)/$dur), $tx)':y=$targetY"
+                                }
+                                "typewriter" -> "alpha='if(lt(t,${o.startSec + 0.1}), 0, 1)'"
+                                else -> ""
+                            }
+                            listOf(en, tx, ty, anim)
+                        } else if (o is StickerOverlay) {
+                            val en = when {
+                                o.endSec > 0 && o.startSec > 0 -> "between(t,${o.startSec},${o.endSec})"
+                                o.endSec > 0 -> "lte(t,${o.endSec})"
+                                o.startSec > 0 -> "gte(t,${o.startSec})"
+                                else -> "1"
+                            }
+                            listOf(en, o.normalizedX * projectW, o.normalizedY * projectH, "")
+                        } else listOf("1", 0f, 0f, "")
+                    }
+                    is OverlayInput.AnimatedSequence -> {
+                        val o = overlayInput.overlay
+                        val en = when {
+                            o.endSec > 0 && o.startSec > 0 -> "between(t,${o.startSec},${o.endSec})"
+                            o.endSec > 0 -> "lte(t,${o.endSec})"
+                            o.startSec > 0 -> "gte(t,${o.startSec})"
+                            else -> "1"
+                        }
+                        listOf(en, o.normalizedX * projectW, o.normalizedY * projectH, "")
+                    }
                 }
 
-                // Animation logic (incorporating normalized coordinates)
-                val tx = o.normalizedX * projectW
-                val ty = o.normalizedY * projectH
+                val enableStr = enable as String
+                val txVal = tx as Float
+                val tyVal = ty as Float
+                val animStr = animExpr as String
 
-                val animExpr = when (o.animationType) {
-                    "slide_in" -> {
-                        // Slide from bottom (H) to target ty for 0.5s
-                        val start = o.startSec
-                        val dur = 0.5f
-                        "x=$tx:y='if(between(t,$start,${start+dur}), H-(H-$ty)*((t-$start)/$dur), $ty)'"
-                    }
-                    "zoom_fade" -> {
-                        // Simple alpha fade in 0.5s at static position
-                        val start = o.startSec
-                        val dur = 0.5f
-                        "x=$tx:y=$ty:alpha='if(between(t,$start,${start+dur}), (t-$start)/$dur, 1)'"
-                    }
-                    "lower_third" -> {
-                        // Slides in from left at bottom, with fixed Y (overrides user Y for template feel)
-                        val start = o.startSec
-                        val dur = 0.6f
-                        val targetY = projectH * 0.85f
-                        "x='if(between(t,$start,${start+dur}), -w+(w+$tx)*((t-$start)/$dur), $tx)':y=$targetY"
-                    }
-                    "typewriter" -> {
-                        // Typewriter handled via pre-rendered PNG frames? No, too complex.
-                        // FFmpeg overlay doesn't support changing the image over time easily.
-                        // For MVP, we use a simple 'pop' fade.
-                        "alpha='if(lt(t,${o.startSec + 0.1}), 0, 1)'"
-                    }
-                    else -> ""
-                }
-
-                val baseOverlay = if (animExpr.contains("x=") || animExpr.contains("y=")) "overlay=shortest=1" else "overlay=$tx:$ty:shortest=1"
-                val opts = if (animExpr.isNotEmpty()) ":$animExpr" else ""
-                sb.append("${label}[${i + 1}:v]${baseOverlay}:enable='$enable'$opts$next;")
-                label = next
-            }
-            // Sticker Overlays (Sequential in the chain)
-            stickerOverlays.forEachIndexed { i, s ->
-                val inputIdx = 1 + pngs.size + i
-                val next = if (i == stickerOverlays.lastIndex) "[vout]" else "[st$i]"
-                val enable = when {
-                    s.endSec > 0 && s.startSec > 0 -> "between(t,${s.startSec},${s.endSec})"
-                    s.endSec > 0 -> "lte(t,${s.endSec})"
-                    s.startSec > 0 -> "gte(t,${s.startSec})"
-                    else -> "1"
-                }
-                val tx = s.normalizedX * projectW; val ty = s.normalizedY * projectH
-                // For sticker sequences, we use -loop 1 if it's a static fallback, but here we assume stickerDirs matched 1:1 with stickerOverlays order
-                // The input index needs to be carefully mapped. 0:v is video. 1..N:v are PNGs. N+1..M:v are sticker sequences.
-                sb.append("${label}[${inputIdx}:v]overlay=$tx:$ty:shortest=1:enable='$enable'$next;")
-                label = next
+                val baseOverlay = if (animStr.contains("x=") || animStr.contains("y=")) "overlay=shortest=1" else "overlay=$txVal:$tyVal:shortest=1"
+                val opts = if (animStr.isNotEmpty()) ":$animStr" else ""
+                sb.append("${currentLabel}[${inputIdx}:v]${baseOverlay}:enable='$enableStr'$opts$nextLabel;")
+                currentLabel = nextLabel
             }
 
             val fc = sb.toString().trimEnd(';')
@@ -329,8 +340,12 @@ class VideoExportOrchestrator(private val context: Context) {
                 input
             }
         } finally {
-            pngs.forEach { try { it.delete() } catch (_: Exception) {} }
-            stickerDirs.forEach { try { it.deleteRecursively() } catch (_: Exception) {} }
+            inputs.forEach { input ->
+                when (input) {
+                    is OverlayInput.StaticPng -> try { input.file.delete() } catch (_: Exception) {}
+                    is OverlayInput.AnimatedSequence -> try { input.dir.deleteRecursively() } catch (_: Exception) {}
+                }
+            }
         }
     }
 

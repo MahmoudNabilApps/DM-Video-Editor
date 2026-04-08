@@ -20,6 +20,8 @@
         android:id="@+id/introTemplateRecyclerView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:paddingBottom="24dp"
+        android:clipToPadding="false"
         android:orientation="horizontal" />
 
 </LinearLayout>

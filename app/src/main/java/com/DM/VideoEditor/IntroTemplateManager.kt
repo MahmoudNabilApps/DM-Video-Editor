@@ -47,9 +47,13 @@ internal fun VideoEditingActivity.applyIntroTemplate(template: IntroTemplate) {
         val fontPath = "/system/fonts/Roboto-Regular.ttf"
         val fontArg = if (File(fontPath).exists()) "fontfile=$fontPath:" else ""
 
+        // Escape single quotes for drawtext
+        val escapedTitle = template.title.replace("'", "\\'")
+        val escapedSubtitle = template.subtitle.replace("'", "\\'")
+
         val cmd = "-f lavfi -i color=c=$colorHex:s=1280x720:d=3 -vf \"" +
-                  "drawtext=${fontArg}text='${template.title}':fontcolor=white:fontsize=64:x=(w-text_w)/2:y=(h-text_h)/2-40:enable='between(t,0,3)'," +
-                  "drawtext=${fontArg}text='${template.subtitle}':fontcolor=white:fontsize=32:x=(w-text_w)/2:y=(h-text_h)/2+40:enable='between(t,0.5,3)'\" " +
+                  "drawtext=${fontArg}text='$escapedTitle':fontcolor=white:fontsize=64:x=(w-text_w)/2:y=(h-text_h)/2-40:enable='between(t,0,3)'," +
+                  "drawtext=${fontArg}text='$escapedSubtitle':fontcolor=white:fontsize=32:x=(w-text_w)/2:y=(h-text_h)/2+40:enable='between(t,0.5,3)'\" " +
                   "-c:v libx264 -t 3 -pix_fmt yuv420p \"${out.absolutePath}\" -y"
 
         val result = withContext(Dispatchers.IO) { FfmpegExecutor.executeSync(cmd) }

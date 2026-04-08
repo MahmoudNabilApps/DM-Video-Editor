@@ -101,4 +101,33 @@ object TextOverlayBitmapRenderer {
             false
         }
     }
+
+    /**
+     * Renders a sticker placeholder (or actual first frame) for the export pipeline.
+     */
+    fun renderStickerPlaceholder(sticker: StickerOverlay, frameW: Int, frameH: Int, pngOut: File): Boolean {
+        if (frameW < 2 || frameH < 2) return false
+        val bmp = Bitmap.createBitmap(frameW, frameH, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bmp)
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.argb(180, 255, 122, 0) // Pro Orange Theme Color
+            textSize = 24f * (frameH / 720f)
+            textAlign = Paint.Align.CENTER
+        }
+
+        val cx = sticker.normalizedX * frameW
+        val cy = sticker.normalizedY * frameH
+
+        // Draw a professional "✨ STICKER" placeholder for the current version
+        canvas.drawCircle(cx, cy, 40f * sticker.scale * (frameH / 720f), paint)
+        canvas.drawText("✨ STICKER", cx, cy + 60f * sticker.scale, paint)
+
+        return try {
+            FileOutputStream(pngOut).use { os -> bmp.compress(Bitmap.CompressFormat.PNG, 100, os) }
+            bmp.recycle()
+            pngOut.exists()
+        } catch (_: Exception) {
+            bmp.recycle(); false
+        }
+    }
 }

@@ -96,11 +96,59 @@ internal fun VideoEditingActivity.updateTextPreview(currentSec: Float) {
         }
     }
 
+        // --- STICKERS ---
+        // We handle stickers similarly to text in the preview container
+        val totalTextCount = textOverlays.size
+        if (container.tag != overlaysVersion) {
+            stickerOverlays.forEachIndexed { sIdx, sticker ->
+                val lottieView = com.airbnb.lottie.LottieAnimationView(this).apply {
+                    setAnimationFromUrl(sticker.lottieUrl)
+                    repeatCount = com.airbnb.lottie.LottieDrawable.INFINITE
+                    playAnimation()
+                }
+
+                val dragView = com.DM.VideoEditor.customviews.DraggableTextView(
+                    context = this,
+                    onPositionChanged = { nx, ny, sc, rot ->
+                        sticker.normalizedX = nx
+                        sticker.normalizedY = ny
+                        sticker.scale = sc
+                        sticker.rotation = rot
+                    },
+                    onDoubleTap = { /* No editing for stickers yet */ },
+                    onSelected = { dv ->
+                        selectedDraggable?.isOverlaySelected = false
+                        selectedDraggable = dv
+                        dv.isOverlaySelected = true
+                    }
+                )
+
+                // Replace internal TextView with Lottie view
+                dragView.removeAllViews()
+                dragView.addView(lottieView, FrameLayout.LayoutParams(100.dp, 100.dp, Gravity.CENTER))
+
+                dragView.textScale = sticker.scale
+                dragView.textRotation = sticker.rotation
+                dragView.normalizedX = sticker.normalizedX
+                dragView.normalizedY = sticker.normalizedY
+
+                container.addView(dragView)
+                dragView.post { dragView.placeInContainer(container.width, container.height) }
+            }
+        }
+
     // Update visibility based on current time
     for (i in 0 until container.childCount) {
-        val child   = container.getChildAt(i) as? com.DM.VideoEditor.customviews.DraggableTextView ?: continue
-        val overlay = textOverlays.getOrNull(i) ?: continue
-        val visible = currentSec >= overlay.startSec && (overlay.endSec < 0 || currentSec <= overlay.endSec)
+            val child = container.getChildAt(i) as? com.DM.VideoEditor.customviews.DraggableTextView ?: continue
+
+            val (vStart, vEnd) = if (i < totalTextCount) {
+                textOverlays[i].startSec to textOverlays[i].endSec
+            } else {
+                val sIdx = i - totalTextCount
+                stickerOverlays.getOrNull(sIdx)?.startSec to stickerOverlays.getOrNull(sIdx)?.endSec
+            }
+
+            val visible = currentSec >= (vStart ?: 0f) && ((vEnd ?: -1f) < 0 || currentSec <= (vEnd ?: 0f))
         child.visibility = if (visible) View.VISIBLE else View.GONE
     }
 }

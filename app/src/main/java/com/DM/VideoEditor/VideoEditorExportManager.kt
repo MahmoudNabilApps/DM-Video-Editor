@@ -116,7 +116,8 @@ internal fun VideoEditingActivity.startExport(scaleFilter: String, totalDuration
             totalDurationMs = totalDurationMs,
             videoQuality = qv,
             isAudioDuckingEnabled = isAudioDuckingEnabled,
-            projectAudioUri = projectAudioUri?.toString()
+            projectAudioUri = projectAudioUri?.toString(),
+            stickerOverlays = ArrayList(stickerOverlays)
         )
         ExportForegroundService.start(this, job)
         showSnack(getString(R.string.export_started_snackbar))

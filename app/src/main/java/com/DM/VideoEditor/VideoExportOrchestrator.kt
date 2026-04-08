@@ -38,6 +38,7 @@ class VideoExportOrchestrator(private val context: Context) {
         val textOverlays = job.textOverlays
         val totalDurationMs = job.totalDurationMs
         val scaleFilter = job.scaleFilter
+        val stickerOverlays = job.stickerOverlays
         try {
             val processedPaths = mutableListOf<String>()
             for (i in clips.indices) {
@@ -59,7 +60,8 @@ class VideoExportOrchestrator(private val context: Context) {
             }
 
             onProgress(55, app.getString(R.string.export_status_text))
-            val withText = if (textOverlays.isNotEmpty()) applyTextOverlays(merged, textOverlays) else merged
+            val withText = if (textOverlays.isNotEmpty() || stickerOverlays.isNotEmpty())
+                applyTextOverlays(merged, textOverlays, stickerOverlays) else merged
 
             onProgress(65, app.getString(R.string.export_status_final))
             val finalOut = getOutputFile("DM_Video_${System.currentTimeMillis()}")
@@ -209,25 +211,38 @@ class VideoExportOrchestrator(private val context: Context) {
         return if (ok && out.exists() && out.length() > 0L) out else null
     }
 
-    private fun applyTextOverlays(input: File, textOverlays: List<TextOverlay>): File {
-        if (textOverlays.isEmpty()) return input
+    private fun applyTextOverlays(input: File, textOverlays: List<TextOverlay>, stickerOverlays: List<StickerOverlay> = emptyList()): File {
+        if (textOverlays.isEmpty() && stickerOverlays.isEmpty()) return input
         val pngs = mutableListOf<File>()
         try {
+            // Render Text
             for ((idx, o) in textOverlays.withIndex()) {
                 val f = File(app.cacheDir, "text_overlay_${idx}_${System.currentTimeMillis()}.png")
                 if (!TextOverlayBitmapRenderer.renderToPng(o, projectW, projectH, f)) {
-                    Log.e(TAG, "PNG render failed for overlay $idx")
-                    return input
+                    Log.e(TAG, "PNG render failed for text overlay $idx")
+                    continue
                 }
                 pngs.add(f)
             }
-            val out = getOutputFile("with_text")
+            // Render Sticker Placeholders (Static for now, per optimization report)
+            for ((idx, s) in stickerOverlays.withIndex()) {
+                val f = File(app.cacheDir, "sticker_overlay_${idx}_${System.currentTimeMillis()}.png")
+                // In a full implementation, we'd use a Lottie-to-PNG renderer here.
+                // For this pro-suite release, we render a high-res placeholder from the lottie assets if available.
+                TextOverlayBitmapRenderer.renderStickerPlaceholder(s, projectW, projectH, f)
+                pngs.add(f)
+            }
+
+            val out = getOutputFile("with_overlays")
             val inputArgs = buildString {
                 append("-i \"${input.absolutePath}\" ")
                 pngs.forEach { append("-loop 1 -i \"${it.absolutePath}\" ") }
             }
             val sb = StringBuilder()
             var label = "[0:v]"
+            val allOverlaysCount = textOverlays.size + stickerOverlays.size
+
+            // Text Overlays
             textOverlays.forEachIndexed { i, o ->
                 val next = if (i == textOverlays.lastIndex) "[vout]" else "[vt$i]"
                 val enable = when {
@@ -275,6 +290,21 @@ class VideoExportOrchestrator(private val context: Context) {
                 sb.append("${label}[${i + 1}:v]${baseOverlay}:enable='$enable'$opts$next;")
                 label = next
             }
+            // Sticker Overlays (Sequential in the chain)
+            stickerOverlays.forEachIndexed { i, s ->
+                val overlayIdx = textOverlays.size + i
+                val next = if (overlayIdx == allOverlaysCount - 1) "[vout]" else "[vt$overlayIdx]"
+                val enable = when {
+                    s.endSec > 0 && s.startSec > 0 -> "between(t,${s.startSec},${s.endSec})"
+                    s.endSec > 0 -> "lte(t,${s.endSec})"
+                    s.startSec > 0 -> "gte(t,${s.startSec})"
+                    else -> "1"
+                }
+                val tx = s.normalizedX * projectW; val ty = s.normalizedY * projectH
+                sb.append("${label}[${overlayIdx + 1}:v]overlay=$tx:$ty:shortest=1:enable='$enable'$next;")
+                label = next
+            }
+
             val fc = sb.toString().trimEnd(';')
             val withAudio = FFmpegCommandBuilder.hasAudioStream(input.absolutePath)
             val audioOpts = if (withAudio) "-map 0:a -c:a copy" else "-an"

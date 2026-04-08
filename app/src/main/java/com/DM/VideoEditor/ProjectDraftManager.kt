@@ -93,6 +93,22 @@ object ProjectDraftManager {
             })
         }
 
+        val stickersArr = JSONArray()
+        if (ctx is VideoEditingActivity) {
+            for (s in ctx.stickerOverlays) {
+                stickersArr.put(JSONObject().apply {
+                    put("id", s.id)
+                    put("lottieUrl", s.lottieUrl)
+                    put("startSec", s.startSec.toDouble())
+                    put("endSec", s.endSec.toDouble())
+                    put("normalizedX", s.normalizedX.toDouble())
+                    put("normalizedY", s.normalizedY.toDouble())
+                    put("scale", s.scale.toDouble())
+                    put("rotation", s.rotation.toDouble())
+                })
+            }
+        }
+
         val root = JSONObject().apply {
             put("id",               id)
             put("name",             name)
@@ -100,6 +116,7 @@ object ProjectDraftManager {
             put("isAudioDuckingEnabled", (ctx as? VideoEditingActivity)?.isAudioDuckingEnabled ?: false)
             put("clips",            clipsArr)
             put("textOverlays",     overlaysArr)
+            put("stickerOverlays",  stickersArr)
             put("projectAudioUri",  projectAudioUri?.toString() ?: "")
         }
 
@@ -115,6 +132,7 @@ object ProjectDraftManager {
         val savedAt: Long,
         val clips: List<VideoClip>,
         val textOverlays: List<TextOverlay>,
+        val stickerOverlays: List<StickerOverlay> = emptyList(),
         val projectAudioUri: Uri?,
         val isAudioDuckingEnabled: Boolean = false
     )
@@ -211,6 +229,20 @@ object ProjectDraftManager {
         val audioUri = if (audioUriStr.isNotBlank()) Uri.parse(audioUriStr) else null
 
         val isDucking = root.optBoolean("isAudioDuckingEnabled", false)
+        val stickersArr = root.optJSONArray("stickerOverlays") ?: JSONArray()
+        val stickers = (0 until stickersArr.length()).map { i ->
+            val s = stickersArr.getJSONObject(i)
+            StickerOverlay(
+                id = s.getLong("id"),
+                lottieUrl = s.getString("lottieUrl"),
+                startSec = s.getDouble("startSec").toFloat(),
+                endSec = s.getDouble("endSec").toFloat(),
+                normalizedX = s.getDouble("normalizedX").toFloat(),
+                normalizedY = s.getDouble("normalizedY").toFloat(),
+                scale = s.getDouble("scale").toFloat(),
+                rotation = s.getDouble("rotation").toFloat()
+            )
+        }
 
         return DraftData(
             id              = root.getString("id"),
@@ -218,6 +250,7 @@ object ProjectDraftManager {
             savedAt         = root.getLong("savedAt"),
             clips           = clips,
             textOverlays    = overlays,
+            stickerOverlays = stickers,
             projectAudioUri = audioUri,
             isAudioDuckingEnabled = isDucking
         )

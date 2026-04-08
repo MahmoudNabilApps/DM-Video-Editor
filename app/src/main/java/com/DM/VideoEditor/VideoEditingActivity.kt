@@ -107,6 +107,18 @@ data class TextOverlay(
     var animationType: String = "none" // none, slide_in, zoom_fade, typewriter
 ) : Parcelable
 
+@Parcelize
+data class StickerOverlay(
+    val id: Long = System.currentTimeMillis(),
+    var lottieUrl: String,
+    var startSec: Float = 0f,
+    var endSec: Float = -1f,
+    var normalizedX: Float = 0.5f,
+    var normalizedY: Float = 0.5f,
+    var scale: Float = 1.0f,
+    var rotation: Float = 0f
+) : Parcelable
+
 
 
 // ── Main Activity ─────────────────────────────────────────────
@@ -118,6 +130,7 @@ class VideoEditingActivity : AppCompatActivity() {
 
     internal val clips = mutableListOf<VideoClip>()
     internal val textOverlays = mutableListOf<TextOverlay>()
+    internal val stickerOverlays = mutableListOf<StickerOverlay>()
     internal var selectedClipIndex = 0
     internal var isVideoLoaded = false
     internal var progressUpdateJob: Job? = null
@@ -273,6 +286,8 @@ class VideoEditingActivity : AppCompatActivity() {
                     clips.addAll(draft.clips)
                     textOverlays.clear()
                     textOverlays.addAll(draft.textOverlays)
+                    stickerOverlays.clear()
+                    stickerOverlays.addAll(draft.stickerOverlays)
                     draft.projectAudioUri?.let { projectAudioUri = it }
                     isAudioDuckingEnabled = draft.isAudioDuckingEnabled
                     withContext(Dispatchers.IO) {
@@ -555,6 +570,7 @@ internal fun setupCategoryToolbar() {
         binding.catAdjust.setOnClickListener  { selectCategory("adjust") }
         binding.catCanvas.setOnClickListener  { selectCategory("canvas") }
         binding.btnAddTextOverlay.setOnClickListener { showTextSheet(null) }
+        binding.btnAddSticker.setOnClickListener { showStickerSheet() }
         selectCategory("edit")
     }
 internal fun selectCategory(cat: String) {
@@ -614,7 +630,8 @@ internal fun populateSubTools(cat: String) {
                 addSubTool("📋", "قائمة النصوص") { toggleTextPanel() }
             }
             "sticker" -> {
-                addSubTool("😀", "الكل")       { showEmojiSheet() }
+                addSubTool("✨", "متحركة")    { showStickerSheet() }
+                addSubTool("😀", "إيموجي")     { showEmojiSheet() }
                 addSubTool("❤", "قلوب")     { showEmojiSheetCategory("hearts") }
                 addSubTool("🎉", "احتفال")     { showEmojiSheetCategory("party") }
                 addSubTool("⭐", "نجوم")     { showEmojiSheetCategory("stars") }
@@ -898,6 +915,7 @@ internal fun startProgressUpdater() {
 internal fun bumpOverlaysVersion() {
         overlaysVersion = System.currentTimeMillis()
         binding.textPreviewContainer.tag = -1L
+        updateTextPreview(player.currentPosition / 1000f)
     }
 
 internal fun updatePlayPause() {

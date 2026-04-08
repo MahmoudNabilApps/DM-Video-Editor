@@ -11,5 +11,6 @@ data class ExportJob(
     val totalDurationMs: Long,
     val videoQuality: Int,
     val isAudioDuckingEnabled: Boolean = false,
-    val projectAudioUri: String? = null
+    val projectAudioUri: String? = null,
+    val stickerOverlays: ArrayList<StickerOverlay> = ArrayList()
 ) : Parcelable

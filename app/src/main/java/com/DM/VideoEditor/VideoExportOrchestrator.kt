@@ -82,7 +82,7 @@ class VideoExportOrchestrator(private val context: Context) {
                 if (localMusic != null) {
                     additionalInputs = "-i \"$localMusic\" "
                     audioFilter = if (ducking) {
-                        "-filter_complex \"[0:a]asplit[a1][a2];[1:a][a1]sidechaincompress=threshold=0.1:ratio=20[bg];[a2][bg]amix=inputs=2:duration=first[aout]\" -map 0:v -map \"[aout]\""
+                        "-filter_complex \"[1:a]volume=0.3[bglow];[0:a][bglow]amix=inputs=2:duration=first:dropout_transition=2[aout]\" -map 0:v -map \"[aout]\""
                     } else {
                         "-filter_complex \"[0:a][1:a]amix=inputs=2:duration=first[aout]\" -map 0:v -map \"[aout]\""
                     }

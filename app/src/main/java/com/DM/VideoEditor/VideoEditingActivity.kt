@@ -407,7 +407,9 @@ class VideoEditingActivity : AppCompatActivity() {
                 draftId         = currentDraftId,
                 clips           = clips,
                 textOverlays    = textOverlays,
-                projectAudioUri = projectAudioUri
+                projectAudioUri = projectAudioUri,
+                stickerOverlays = stickerOverlays,
+                isAudioDuckingEnabled = isAudioDuckingEnabled
             )
         } catch (e: Exception) {
             Log.e("VideoEditor", "saveDraftSnapshot failed", e)

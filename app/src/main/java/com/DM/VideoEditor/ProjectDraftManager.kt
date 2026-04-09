@@ -45,7 +45,9 @@ object ProjectDraftManager {
         draftId: String?,                     // null → create new draft
         clips: List<VideoClip>,
         textOverlays: List<TextOverlay>,
-        projectAudioUri: Uri?
+        projectAudioUri: Uri?,
+        stickerOverlays: List<StickerOverlay> = emptyList(),
+        isAudioDuckingEnabled: Boolean = false
     ): String {
         val id = draftId ?: System.currentTimeMillis().toString()
         val name = "مشروع — ${DATE_FMT.format(Date())}"
@@ -94,9 +96,7 @@ object ProjectDraftManager {
         }
 
         val stickersArr = JSONArray()
-        // If we can't get the stickers directly from ctx, we should pass them as a parameter.
-        // But for now, let's keep it simple and check if it's a VideoEditingActivity.
-        val stickerList = (ctx as? VideoEditingActivity)?.stickerOverlays ?: emptyList()
+        val stickerList = stickerOverlays
         for (s in stickerList) {
             stickersArr.put(JSONObject().apply {
                 put("id", s.id)
@@ -114,7 +114,7 @@ object ProjectDraftManager {
             put("id",               id)
             put("name",             name)
             put("savedAt",          System.currentTimeMillis())
-            put("isAudioDuckingEnabled", (ctx as? VideoEditingActivity)?.isAudioDuckingEnabled ?: false)
+            put("isAudioDuckingEnabled", isAudioDuckingEnabled)
             put("clips",            clipsArr)
             put("textOverlays",     overlaysArr)
             put("stickerOverlays",  stickersArr)

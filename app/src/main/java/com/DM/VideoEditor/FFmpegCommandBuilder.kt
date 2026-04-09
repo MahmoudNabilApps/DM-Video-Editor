@@ -115,6 +115,7 @@ object FFmpegCommandBuilder {
         }
 
         if (hasFilter) vfParts.add(clip.filterCmd)
+        if (!clip.overlayEffect.isNullOrBlank()) vfParts.add(clip.overlayEffect!!)
         vfParts.add(scaleFilter)   // always last
 
         val afParts = mutableListOf<String>()

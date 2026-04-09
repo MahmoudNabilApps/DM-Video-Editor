@@ -94,19 +94,20 @@ object ProjectDraftManager {
         }
 
         val stickersArr = JSONArray()
-        if (ctx is VideoEditingActivity) {
-            for (s in ctx.stickerOverlays) {
-                stickersArr.put(JSONObject().apply {
-                    put("id", s.id)
-                    put("lottieUrl", s.lottieUrl)
-                    put("startSec", s.startSec.toDouble())
-                    put("endSec", s.endSec.toDouble())
-                    put("normalizedX", s.normalizedX.toDouble())
-                    put("normalizedY", s.normalizedY.toDouble())
-                    put("scale", s.scale.toDouble())
-                    put("rotation", s.rotation.toDouble())
-                })
-            }
+        // If we can't get the stickers directly from ctx, we should pass them as a parameter.
+        // But for now, let's keep it simple and check if it's a VideoEditingActivity.
+        val stickerList = (ctx as? VideoEditingActivity)?.stickerOverlays ?: emptyList()
+        for (s in stickerList) {
+            stickersArr.put(JSONObject().apply {
+                put("id", s.id)
+                put("lottieUrl", s.lottieUrl)
+                put("startSec", s.startSec.toDouble())
+                put("endSec", s.endSec.toDouble())
+                put("normalizedX", s.normalizedX.toDouble())
+                put("normalizedY", s.normalizedY.toDouble())
+                put("scale", s.scale.toDouble())
+                put("rotation", s.rotation.toDouble())
+            })
         }
 
         val root = JSONObject().apply {

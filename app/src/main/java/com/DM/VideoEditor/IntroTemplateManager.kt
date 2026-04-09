@@ -54,7 +54,7 @@ internal fun VideoEditingActivity.applyIntroTemplate(template: IntroTemplate) {
         val cmd = "-f lavfi -i color=c=$colorHex:s=1280x720:d=3 -vf \"" +
                   "drawtext=${fontArg}text='$escapedTitle':fontcolor=white:fontsize=64:x=(w-text_w)/2:y=(h-text_h)/2-40:enable='between(t,0,3)'," +
                   "drawtext=${fontArg}text='$escapedSubtitle':fontcolor=white:fontsize=32:x=(w-text_w)/2:y=(h-text_h)/2+40:enable='between(t,0.5,3)'\" " +
-                  "-c:v libx264 -t 3 -pix_fmt yuv420p \"${out.absolutePath}\" -y"
+                  "-c:v mpeg4 -q:v 5 -t 3 -pix_fmt yuv420p \"${out.absolutePath}\" -y"
 
         val result = withContext(Dispatchers.IO) { FfmpegExecutor.executeSync(cmd) }
 

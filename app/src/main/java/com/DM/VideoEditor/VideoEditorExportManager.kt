@@ -59,12 +59,13 @@ internal fun VideoEditingActivity.showExportQualityDialog() {
         }.also { root.addView(it) }
 
         // Quality buttons
+        // For mpeg4 -q:v, lower is better. 2=High, 5=Medium, 8=Low.
         data class Quality(val label: String, val icon: String, val sub: String, val scale: String, val qv: Int)
         val qualities = listOf(
-            Quality("1080p", "🏆", "جودة سينمائية عالية", "scale=-2:1080", 18),
-            Quality("720p",  "⚖️", "متوازنة — موصى بها", "scale=-2:720", 23),
-            Quality("480p",  "📦", "حجم صغير — مشاركة سريعة", "scale=-2:480", 28),
-            Quality("أصلية","📋", "الجودة الأصلية كما هي", "", 23)
+            Quality("1080p", "🏆", "جودة سينمائية عالية", "scale=-2:1080", 2),
+            Quality("720p",  "⚖️", "متوازنة — موصى بها", "scale=-2:720", 5),
+            Quality("480p",  "📦", "حجم صغير — مشاركة سريعة", "scale=-2:480", 8),
+            Quality("أصلية","📋", "الجودة الأصلية كما هي", "", 5)
         )
         qualities.forEach { q ->
             LinearLayout(this).apply {

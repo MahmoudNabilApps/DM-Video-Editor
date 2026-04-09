@@ -70,9 +70,8 @@ class VideoExportOrchestrator(private val context: Context) {
             val ducking = job.isAudioDuckingEnabled
             val bgMusic = job.projectAudioUri
 
-            // Fallback check for libx264 (GPL) availability in the specific FFmpeg build
-            val encoder = if (FFmpegCommandBuilder.isEncoderAvailable("libx264")) "libx264" else "mpeg4"
-            val qualityArgs = if (encoder == "libx264") "-preset superfast -crf $qv" else "-q:v $qv"
+            val encoder = "mpeg4"
+            val qualityArgs = "-q:v $qv"
 
             var finalInput = withText
             var audioFilter = ""
@@ -332,7 +331,7 @@ class VideoExportOrchestrator(private val context: Context) {
             val fc = sb.toString().trimEnd(';')
             val withAudio = FFmpegCommandBuilder.hasAudioStream(input.absolutePath)
             val audioOpts = if (withAudio) "-map 0:a -c:a copy" else "-an"
-            val cmd = "$inputArgs-filter_complex \"$fc\" -map \"[vout]\" -c:v libx264 -preset superfast -crf 23 $audioOpts \"${out.absolutePath}\" -y"
+            val cmd = "$inputArgs-filter_complex \"$fc\" -map \"[vout]\" -c:v mpeg4 -q:v 5 $audioOpts \"${out.absolutePath}\" -y"
             val ovResult = FfmpegExecutor.executeSync(cmd)
             return if (FfmpegExecutor.isSuccess(ovResult) && out.exists() && out.length() > 0) out
             else {

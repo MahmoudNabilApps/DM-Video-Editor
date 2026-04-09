@@ -136,7 +136,7 @@ object FFmpegCommandBuilder {
                 val afStr = "[0:a]${afParts.joinToString(",")}[a]"
                 "$trimArgs -i \"$inputPath\" -filter_complex \"$vfStr;$afStr\" " +
                     "-map \"[v]\" -map \"[a]\" " +
-                    "-c:v libx264 -preset superfast -crf 23 -c:a aac -b:a 128k -ar 44100 " +
+                    "-c:v mpeg4 -q:v 5 -c:a aac -b:a 128k -ar 44100 " +
                     "-movflags +faststart \"$outputPath\" -y"
             }
             afParts.isNotEmpty() && !hasAudio -> {
@@ -144,14 +144,14 @@ object FFmpegCommandBuilder {
                 val vfStr = "[0:v]${vfParts.joinToString(",")}[v]"
                 "$trimArgs -i \"$inputPath\" -filter_complex \"$vfStr\" " +
                     "-map \"[v]\" -an " +
-                    "-c:v libx264 -preset superfast -crf 23 " +
+                    "-c:v mpeg4 -q:v 5 " +
                     "-movflags +faststart \"$outputPath\" -y"
             }
             else -> {
                 val vfStr = vfParts.joinToString(",")
                 val audioOut = if (hasAudio) "-c:a aac -b:a 128k -ar 44100" else "-an"
                 "$trimArgs -i \"$inputPath\" -vf \"$vfStr\" " +
-                    "-c:v libx264 -preset superfast -crf 23 $audioOut " +
+                    "-c:v mpeg4 -q:v 5 $audioOut " +
                     "-movflags +faststart \"$outputPath\" -y"
             }
         }
@@ -217,12 +217,12 @@ object FFmpegCommandBuilder {
         return if (mergeAudio) {
             "$inputArgs -filter_complex \"${sb.trimEnd(';')}\" " +
                 "-map \"[vout]\" -map \"[aout]\" " +
-                "-c:v libx264 -preset superfast -crf 23 -c:a aac -b:a 128k -ar 44100 " +
+                "-c:v mpeg4 -q:v 5 -c:a aac -b:a 128k -ar 44100 " +
                 "-movflags +faststart \"$outputPath\" -y"
         } else {
             "$inputArgs -filter_complex \"${sb.trimEnd(';')}\" " +
                 "-map \"[vout]\" " +
-                "-c:v libx264 -preset superfast -crf 23 -an " +
+                "-c:v mpeg4 -q:v 5 -an " +
                 "-movflags +faststart \"$outputPath\" -y"
         }
     }
@@ -233,9 +233,9 @@ object FFmpegCommandBuilder {
      */
     fun buildConcatCmd(concatListFile: File, outputPath: String, includeAudio: Boolean = true): String {
         val tail = if (includeAudio) {
-            "-c:v libx264 -preset superfast -crf 23 -c:a aac -b:a 128k -ar 44100 -movflags +faststart "
+            "-c:v mpeg4 -q:v 5 -c:a aac -b:a 128k -ar 44100 -movflags +faststart "
         } else {
-            "-c:v libx264 -preset superfast -crf 23 -an -movflags +faststart "
+            "-c:v mpeg4 -q:v 5 -an -movflags +faststart "
         }
         return "-f concat -safe 0 -protocol_whitelist file,crypto,data,saf -i \"${concatListFile.absolutePath}\" " +
             tail + "\"$outputPath\" -y"
@@ -275,7 +275,7 @@ object FFmpegCommandBuilder {
         val fc = sb.toString()
         return "$inputArgs -filter_complex \"$fc\" " +
             "-map \"[vout]\" -map \"[aout]\" " +
-            "-c:v libx264 -preset superfast -crf 23 -c:a aac -b:a 128k -ar 44100 " +
+            "-c:v mpeg4 -q:v 5 -c:a aac -b:a 128k -ar 44100 " +
             "-movflags +faststart \"$outputPath\" -y"
     }
 

@@ -262,69 +262,72 @@ class VideoExportOrchestrator(private val context: Context) {
                 val nextLabel = if (i == inputs.lastIndex) "[vout]" else "[ov$i]"
                 val inputIdx = i + 1
 
-                val (enable, tx, ty, animExpr) = when (overlayInput) {
+                when (overlayInput) {
                     is OverlayInput.StaticPng -> {
-                        val o = overlayInput.overlay
-                        if (o is TextOverlay) {
-                            val en = when {
-                                o.endSec > 0 && o.startSec > 0 -> "between(t,${o.startSec},${o.endSec})"
-                                o.endSec > 0 -> "lte(t,${o.endSec})"
-                                o.startSec > 0 -> "gte(t,${o.startSec})"
+                        val ov = overlayInput.overlay
+                        if (ov is TextOverlay) {
+                            val tx = (ov.normalizedX * projectW).toInt()
+                            val ty = (ov.normalizedY * projectH).toInt()
+                            val enableStr = when {
+                                ov.endSec > 0 && ov.startSec >= 0 -> "between(t,${ov.startSec},${ov.endSec})"
+                                ov.endSec > 0 -> "lte(t,${ov.endSec})"
+                                ov.startSec > 0 -> "gte(t,${ov.startSec})"
                                 else -> "1"
                             }
-                            val tx = o.normalizedX * projectW
-                            val ty = o.normalizedY * projectH
-                            val anim = when (o.animationType) {
+                            when (ov.animationType) {
                                 "slide_in" -> {
-                                    val start = o.startSec
+                                    val start = ov.startSec
                                     val dur = 0.5f
-                                    "x=$tx:y='if(between(t,$start,${start+dur}), H-(H-$ty)*((t-$start)/$dur), $ty)'"
+                                    sb.append("${currentLabel}[$inputIdx:v]overlay=x=${tx}:y='if(between(t,${start},${start + dur}),H-(H-${ty})*((t-${start})/${dur}),${ty})':shortest=1:enable='${enableStr}'${nextLabel};")
                                 }
                                 "zoom_fade" -> {
-                                    val start = o.startSec
+                                    val start = ov.startSec
                                     val dur = 0.5f
-                                    "x=$tx:y=$ty:alpha='if(between(t,$start,${start+dur}), (t-$start)/$dur, 1)'"
+                                    val fadeLabel = "[pfade${i}]"
+                                    // Step 1: fade the overlay PNG's alpha channel in
+                                    sb.append("[$inputIdx:v]format=rgba,fade=t=in:st=${start}:d=${dur}:alpha=1${fadeLabel};")
+                                    // Step 2: composite faded overlay onto video
+                                    sb.append("${currentLabel}${fadeLabel}overlay=x=${tx}:y=${ty}:format=auto:shortest=1:enable='${enableStr}'${nextLabel};")
                                 }
                                 "lower_third" -> {
-                                    val start = o.startSec
+                                    val start = ov.startSec
                                     val dur = 0.6f
-                                    val targetY = projectH * 0.85f
-                                    "x='if(between(t,$start,${start+dur}), -w+(w+$tx)*((t-$start)/$dur), $tx)':y=$targetY"
+                                    val targetY = (projectH * 0.85f).toInt()
+                                    sb.append("${currentLabel}[$inputIdx:v]overlay=x='if(between(t,${start},${start + dur}),-w+(w+${tx})*((t-${start})/${dur}),${tx})':y=${targetY}:shortest=1:enable='${enableStr}'${nextLabel};")
                                 }
-                                "typewriter" -> "alpha='if(lt(t,${o.startSec + 0.1}), 0, 1)'"
-                                else -> ""
+                                "typewriter" -> {
+                                    // Instant appear at startSec — correct typewriter behavior
+                                    sb.append("${currentLabel}[$inputIdx:v]overlay=x=${tx}:y=${ty}:shortest=1:enable='gte(t,${ov.startSec})'${nextLabel};")
+                                }
+                                else -> {
+                                    sb.append("${currentLabel}[$inputIdx:v]overlay=x=${tx}:y=${ty}:shortest=1:enable='${enableStr}'${nextLabel};")
+                                }
                             }
-                            listOf(en, tx, ty, anim)
-                        } else if (o is StickerOverlay) {
-                            val en = when {
-                                o.endSec > 0 && o.startSec > 0 -> "between(t,${o.startSec},${o.endSec})"
-                                o.endSec > 0 -> "lte(t,${o.endSec})"
-                                o.startSec > 0 -> "gte(t,${o.startSec})"
+                        } else if (ov is StickerOverlay) {
+                            val tx = (ov.normalizedX * projectW).toInt()
+                            val ty = (ov.normalizedY * projectH).toInt()
+                            val enableStr = when {
+                                ov.endSec > 0 && ov.startSec >= 0 -> "between(t,${ov.startSec},${ov.endSec})"
+                                ov.endSec > 0 -> "lte(t,${ov.endSec})"
+                                ov.startSec > 0 -> "gte(t,${ov.startSec})"
                                 else -> "1"
                             }
-                            listOf(en, o.normalizedX * projectW, o.normalizedY * projectH, "")
-                        } else listOf("1", 0f, 0f, "")
+                            sb.append("${currentLabel}[$inputIdx:v]overlay=x=${tx}:y=${ty}:shortest=1:enable='${enableStr}'${nextLabel};")
+                        }
                     }
                     is OverlayInput.AnimatedSequence -> {
-                        val o = overlayInput.overlay
-                        val en = when {
-                            o.endSec > 0 && o.startSec > 0 -> "between(t,${o.startSec},${o.endSec})"
-                            o.endSec > 0 -> "lte(t,${o.endSec})"
-                            o.startSec > 0 -> "gte(t,${o.startSec})"
+                        val ov = overlayInput.overlay
+                        val tx = (ov.normalizedX * projectW).toInt()
+                        val ty = (ov.normalizedY * projectH).toInt()
+                        val enableStr = when {
+                            ov.endSec > 0 && ov.startSec >= 0 -> "between(t,${ov.startSec},${ov.endSec})"
+                            ov.endSec > 0 -> "lte(t,${ov.endSec})"
+                            ov.startSec > 0 -> "gte(t,${ov.startSec})"
                             else -> "1"
                         }
-                        listOf(en, o.normalizedX * projectW, o.normalizedY * projectH, "")
+                        sb.append("${currentLabel}[$inputIdx:v]overlay=x=${tx}:y=${ty}:shortest=1:enable='${enableStr}'${nextLabel};")
                     }
                 }
-
-                val enableStr = enable as String
-                val txVal = tx as Float
-                val tyVal = ty as Float
-                val animStr = animExpr as String
-
-                val baseOverlay = if (animStr.contains("x=") || animStr.contains("y=")) "overlay=shortest=1" else "overlay=$txVal:$tyVal:shortest=1"
-                val opts = if (animStr.isNotEmpty()) ":$animStr" else ""
-                sb.append("${currentLabel}[${inputIdx}:v]${baseOverlay}:enable='$enableStr'$opts$nextLabel;")
                 currentLabel = nextLabel
             }
 

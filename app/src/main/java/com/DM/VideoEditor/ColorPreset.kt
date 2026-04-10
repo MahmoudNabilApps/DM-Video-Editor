@@ -25,7 +25,7 @@ data class ColorPreset(
             ColorPreset("Noir", "⬛", "colorbalance=rs=0.1:gs=0.1:bs=0.1,hue=s=0,eq=contrast=1.4:brightness=-0.05"),
 
             // Vintage / Retro Film
-            ColorPreset("Vintage", "📺", "curves=vintage,vignette=PI/4,eq=saturation=0.9:contrast=1.1"),
+            ColorPreset("Vintage", "📺", "colorbalance=rs=0.08:gs=-0.02:bs=-0.12:rm=0.05:gm=0.02:bm=-0.08,eq=contrast=1.05:saturation=0.85:brightness=-0.02,vignette=PI/4"),
 
             // Vibrant Nature
             ColorPreset("Vivid", "🌈", "eq=saturation=1.6:contrast=1.15:brightness=0.05"),

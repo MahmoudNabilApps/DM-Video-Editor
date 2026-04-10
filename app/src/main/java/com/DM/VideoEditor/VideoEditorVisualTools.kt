@@ -260,8 +260,8 @@ internal fun VideoEditingActivity.showSingleAdjust(param: String) {
                 "brightness"  -> "eq=brightness=$v"
                 "contrast"    -> "eq=contrast=$v"
                 "saturation"  -> "eq=saturation=$v"
-                "highlights"  -> "curves=highlights=${0.5f + v}"
-                "shadows"     -> "curves=shadows=${0.5f + v}"
+                "highlights"  -> "curves=master='0/0 0.65/0.65 1/${(0.5f + v).coerceIn(0.5f, 1.0f)}'"
+                "shadows"     -> "curves=master='0/${(v + 0.5f - 0.5f).coerceIn(0.0f, 0.35f)} 0.35/0.35 1/1'"
                 "sharpen"     -> "unsharp=5:5:$v:5:5:0"
                 "temperature" -> "colorbalance=rs=$v:gs=${v * 0.3f}:bs=${-v}"
                 else          -> return@setOnClickListener

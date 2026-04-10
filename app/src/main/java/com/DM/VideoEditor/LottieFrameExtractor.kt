@@ -6,7 +6,9 @@ import android.graphics.Canvas
 import com.airbnb.lottie.LottieCompositionFactory
 import com.airbnb.lottie.LottieDrawable
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import kotlin.coroutines.resume
 import java.io.File
 import java.io.FileOutputStream
 
@@ -30,7 +32,6 @@ object LottieFrameExtractor {
             val composition = if (lottieUrl.startsWith("http")) {
                 LottieCompositionFactory.fromUrlSync(context, lottieUrl).value
             } else {
-                // Assume asset or local for now
                 LottieCompositionFactory.fromAssetSync(context, lottieUrl).value
             } ?: return@withContext null
 

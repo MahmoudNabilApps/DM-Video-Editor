@@ -742,7 +742,7 @@ internal fun VideoEditingActivity.applyEffectPreset(name: String) {
     val act = this
     val filter = when (name) {
         "glow"      -> "eq=saturation=1.5,unsharp=5:5:1.5:5:5:0"
-        "retro"     -> "curves=vintage,vignette=PI/4"
+        "retro"     -> "colorbalance=rs=0.08:gs=-0.02:bs=-0.12,eq=contrast=1.05:saturation=0.85,vignette=PI/4"
         "cinematic" -> "eq=contrast=1.3:saturation=0.8,vignette=PI/5,colorbalance=rs=0.05:bs=-0.05"
         "blur"      -> "boxblur=5:1"
         else        -> return

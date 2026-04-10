@@ -58,6 +58,7 @@ object FFmpegCommandBuilder {
         "radial"      -> "radial"
         "squeezev"    -> "squeezev"
         "smoothstep"  -> "smoothstep"
+        "none"        -> "fade"   // will use duration=0.01 — see buildXfadeMergeCmd
         else          -> "fade"
     }
 
@@ -202,14 +203,17 @@ object FFmpegCommandBuilder {
         var offset = 0.0
 
         for (i in 1 until paths.size) {
-            val tr = xfadeCode(clips.getOrNull(i)?.transition ?: "none")
-            offset += (durations[i - 1] - 1.0).coerceAtLeast(0.1)
+            val rawTransition = clips.getOrNull(i)?.transition ?: "none"
+            val tr = xfadeCode(rawTransition)
+            val xfadeDur = if (rawTransition == "none") 0.01 else 0.8
+            val acrossDur = if (rawTransition == "none") 0.01 else 0.8
+            offset += (durations[i - 1] - xfadeDur).coerceAtLeast(0.1)
             val isLast = i == paths.size - 1
             val vL = if (isLast) "[vout]" else "[v$i]"
-            sb.append("${prevV}[$i:v]xfade=transition=$tr:duration=0.8:offset=${String.format(Locale.US, "%.3f", offset)}$vL;")
+            sb.append("${prevV}[$i:v]xfade=transition=$tr:duration=${String.format(Locale.US, "%.2f", xfadeDur)}:offset=${String.format(Locale.US, "%.3f", offset)}$vL;")
             if (mergeAudio) {
                 val aL = if (isLast) "[aout]" else "[a$i]"
-                sb.append("${prevA}[ap$i]acrossfade=d=0.8$aL;")
+                sb.append("${prevA}[ap$i]acrossfade=d=${String.format(Locale.US, "%.2f", acrossDur)}$aL;")
                 prevA = aL
             }
             prevV = vL

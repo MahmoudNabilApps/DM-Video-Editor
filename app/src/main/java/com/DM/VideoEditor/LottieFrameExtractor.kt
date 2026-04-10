@@ -29,10 +29,14 @@ object LottieFrameExtractor {
         try {
             outputDir.mkdirs()
 
-            val composition = if (lottieUrl.startsWith("http")) {
-                LottieCompositionFactory.fromUrlSync(context, lottieUrl).value
-            } else {
-                LottieCompositionFactory.fromAssetSync(context, lottieUrl).value
+            val composition = suspendCancellableCoroutine<com.airbnb.lottie.LottieComposition?> { cont ->
+                val task = if (lottieUrl.startsWith("http")) {
+                    LottieCompositionFactory.fromUrl(context, lottieUrl)
+                } else {
+                    LottieCompositionFactory.fromAsset(context, lottieUrl)
+                }
+                task.addListener { result -> if (cont.isActive) cont.resume(result) }
+                task.addFailureListener { if (cont.isActive) cont.resume(null) }
             } ?: return@withContext null
 
             val drawable = LottieDrawable()

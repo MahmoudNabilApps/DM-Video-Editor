@@ -271,5 +271,23 @@
 
     <!-- حفظ عام -->
     <string name="snack_saved">✓ تم الحفظ</string>
+    <string name="btn_apply_to_all">تطبيق على الكل</string>
+    <string name="snack_applied_to_all">✓ تم التطبيق على جميع المقاطع</string>
+    <string name="audio_fade">تلاشي الصوت</string>
+    <string name="fade_in">دخول تدريجي (Fade In)</string>
+    <string name="fade_out">خروج تدريجي (Fade Out)</string>
+    <string name="fade_duration">%1$.1f ثانية</string>
+    <string name="chroma_key">إزالة الخلفية (Chroma)</string>
+    <string name="similarity">قوة العزل</string>
+    <string name="smoothness">النعومة</string>
+    <string name="key_color">لون الكروما</string>
+    <string name="select_bg_image">اختر صورة الخلفية</string>
+    <string name="audio_ducking">تخفيض الصوت الذكي (Ducking)</string>
+    <string name="ducking_active">خفض الموسيقى تلقائياً عند وجود صوت</string>
+    <string name="split_screen">شاشة مقسمة</string>
+    <string name="split_side_by_side">جنباً إلى جنب</string>
+    <string name="split_top_bottom">أعلى وأسفل</string>
+    <string name="split_quad">شبكة رباعية (2x2)</string>
+    <string name="select_second_video">اختر الفيديو الثاني</string>
 </resources>
 

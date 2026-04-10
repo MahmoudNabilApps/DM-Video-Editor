@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/animationCard"
+    android:layout_width="100dp"
+    android:layout_height="80dp"
+    android:layout_margin="4dp"
+    app:cardCornerRadius="12dp"
+    app:cardBackgroundColor="@color/colorCardDark"
+    app:strokeWidth="0dp"
+    app:strokeColor="@color/colorAccentOrange"
+    android:clickable="true"
+    android:focusable="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="8dp">
+
+        <TextView
+            android:id="@+id/tvAnimationIcon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="24sp"
+            android:text="🎬" />
+
+        <TextView
+            android:id="@+id/tvAnimationLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:gravity="center"
+            android:singleLine="true"
+            android:ellipsize="end"
+            android:text="Slide In"
+            android:textColor="@color/colorTextMuted"
+            android:textSize="11sp" />
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

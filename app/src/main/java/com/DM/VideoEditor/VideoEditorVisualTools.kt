@@ -15,6 +15,8 @@ import android.view.ViewGroup
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
@@ -92,10 +94,57 @@ internal fun VideoEditingActivity.reverseVideo() {
 
 // ── FILTERS ──────────────────────────────────────────────
 internal fun VideoEditingActivity.showFilterSheet() {
-    val act = this
-    val names = arrayOf("❌ بدون","⬛ أبيض وأسود","🟤 خمري","🟡 دافئ","🔵 بارد","☀️ مضيء","🌈 حيوي","🌫️ باهت","🎞️ فينييت","🔆 تباين عالي","🟣 أرجواني","🎬 درامي","📺 ريترو","🌅 غروب","🧊 جليدي")
-    val cmds = arrayOf(null,"hue=s=0","colorchannelmixer=.393:.769:.189:0:.349:.686:.168:0:.272:.534:.131","colorbalance=rs=0.2:gs=0.1:bs=-0.1","colorbalance=rs=-0.1:gs=-0.1:bs=0.2","eq=brightness=0.12:contrast=1.1:saturation=1.1","eq=saturation=1.6:contrast=1.15","eq=brightness=-0.1:contrast=0.85:saturation=0.7","vignette=PI/4","eq=contrast=1.6:brightness=0.05:saturation=1.2","colorbalance=rs=0.1:gs=-0.05:bs=0.2","eq=contrast=1.4:brightness=-0.05:saturation=0.6,vignette=PI/5","curves=vintage","colorbalance=rs=0.3:gs=0.1:bs=-0.2,eq=saturation=1.3","colorbalance=rs=-0.2:gs=-0.05:bs=0.3,eq=brightness=0.05")
-    MaterialAlertDialogBuilder(act).setTitle("الفلاتر").setItems(names) { _, w -> cmds[w]?.let { applyFilter(it) } }.show()
+    val clip = clips.getOrNull(selectedClipIndex) ?: return
+    val d = BottomSheetDialog(this)
+    val root = LinearLayout(this).apply {
+        orientation = LinearLayout.VERTICAL
+        setBackgroundColor(editorColor(R.color.colorSheetBackground))
+        setPadding(32, 32, 32, 60)
+    }
+
+    TextView(this).apply {
+        text = "🎬 فلاتر سينمائية (Cinematic Filters)"
+        textSize = 18f; setTextColor(Color.WHITE); setTypeface(null, android.graphics.Typeface.BOLD)
+        setPadding(0, 0, 0, 16)
+    }.also { root.addView(it) }
+
+    val rv = RecyclerView(this).apply {
+        layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, this@showFilterSheet.run { 360.dp })
+        layoutManager = GridLayoutManager(this@showFilterSheet, 3)
+    }
+
+    val presets = ColorPreset.getAll()
+    rv.adapter = FilterSelectorAdapter(presets, clip.filterCmd) { p ->
+        applyFilter(p.filter ?: "")
+        showSnack("✓ تم تطبيق فلتر: ${p.label}")
+    }
+    root.addView(rv)
+
+    MaterialButton(this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+        text = getString(R.string.btn_apply_to_all)
+        setTextColor(editorColor(R.color.colorAccentOrange))
+        layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = 20 }
+        setOnClickListener {
+            val currentFilter = clips[selectedClipIndex].filterCmd
+            val backups = clips.map { it.filterCmd }
+            clips.forEach { it.filterCmd = currentFilter }
+            clipAdapter.notifyDataSetChanged()
+            undoRedo.commit(
+                undo = {
+                    backups.forEachIndexed { i, s -> clips[i].filterCmd = s }
+                    clipAdapter.notifyDataSetChanged()
+                },
+                redo = {
+                    clips.forEach { it.filterCmd = currentFilter }
+                    clipAdapter.notifyDataSetChanged()
+                }
+            )
+            d.dismiss()
+            showSnack(getString(R.string.snack_applied_to_all))
+        }
+    }.also { root.addView(it) }
+
+    d.setContentView(root); d.show()
 }
 
 internal fun VideoEditingActivity.applyFilter(f: String) {
@@ -610,9 +659,15 @@ internal fun VideoEditingActivity.showNoiseReduceSheet() {
 // ── STABILIZE ──────────────────────────────────────────────
 internal fun VideoEditingActivity.showStabilizeSheet() {
     val act = this
-    MaterialAlertDialogBuilder(act).setTitle(R.string.stabilize)
-        .setMessage(R.string.stabilize_description)
-        .setPositiveButton(R.string.btn_apply) { _, _ ->
+    MaterialAlertDialogBuilder(act).setTitle("📷 تثبيت الصورة المتقدم (Advanced Stabilization)")
+        .setMessage("يقدم وضع التثبيت المتقدم نتائج أفضل لتقليل اهتزاز الكاميرا بشكل طبيعي.\n\n" + getString(R.string.stabilize_description))
+        .setPositiveButton("تثبيت ذكي (Smart)") { _, _ ->
+            // Use vidstabdetect + vidstabtransform equivalent via deshake for immediate single-pass results
+            // but with professional parameters.
+            applyFilter("deshake=edge=mirror:blocksize=16:contrast=125:search=64")
+            showSnack(getString(R.string.snack_stabilizing_video))
+        }
+        .setNeutralButton("تثبيت سريع (Fast)") { _, _ ->
             applyFilter("deshake=x=-1:y=-1:w=-1:h=-1:rx=64:ry=64")
             showSnack(getString(R.string.snack_stabilizing_video))
         }
@@ -695,3 +750,206 @@ internal fun VideoEditingActivity.applyEffectPreset(name: String) {
     applyFilter(filter); showSnack(getString(R.string.snack_applying_effect, name))
 }
 
+internal fun VideoEditingActivity.showChromaKeySheet() {
+    val idx = selectedClipIndex
+    val clip = clips.getOrNull(idx) ?: return
+    val d = BottomSheetDialog(this)
+    val root = LinearLayout(this).apply {
+        orientation = LinearLayout.VERTICAL; setBackgroundColor(editorColor(R.color.colorSheetBackground))
+        setPadding(32, 32, 32, 60)
+    }
+
+    TextView(this).apply {
+        text = "💚 " + getString(R.string.chroma_key); textSize = 18f; setTextColor(Color.WHITE); setTypeface(null, Typeface.BOLD)
+        setPadding(0, 0, 0, 16)
+    }.also { root.addView(it) }
+
+    // Key Color Selection
+    TextView(this).apply { text = getString(R.string.key_color); textSize = 12f; setTextColor(editorColor(R.color.colorTextMuted)) }.also { root.addView(it) }
+    val colorRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; setPadding(0, 8, 0, 16) }
+    val colors = mapOf("Green" to "00FF00", "Blue" to "0000FF", "Red" to "FF0000")
+    var selectedColor = clip.chromaKeyColor ?: "00FF00"
+
+    colors.forEach { (name, hex) ->
+        MaterialButton(this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+            text = name; layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+            setOnClickListener { selectedColor = hex; showSnack("Selected: $name") }
+        }.also { colorRow.addView(it) }
+    }
+    root.addView(colorRow)
+
+    // Similarity Slider
+    TextView(this).apply { text = getString(R.string.similarity); textSize = 12f; setTextColor(editorColor(R.color.colorTextMuted)) }.also { root.addView(it) }
+    val slSim = Slider(this).apply { valueFrom = 0.01f; valueTo = 1.0f; stepSize = 0.01f; value = clip.chromaSimilarity }
+    root.addView(slSim)
+
+    // Smoothness Slider
+    TextView(this).apply { text = getString(R.string.smoothness); textSize = 12f; setTextColor(editorColor(R.color.colorTextMuted)) }.also { root.addView(it) }
+    val slSmooth = Slider(this).apply { valueFrom = 0.01f; valueTo = 0.5f; stepSize = 0.01f; value = clip.chromaSmoothness }
+    root.addView(slSmooth)
+
+    MaterialButton(this).apply {
+        text = "✓ Apply Chroma Key"; setBackgroundColor(editorColor(R.color.colorAccentOrange)); setTextColor(Color.WHITE)
+        layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = 24 }
+        setOnClickListener {
+            val old = clip.copy()
+            clip.chromaKeyColor = selectedColor
+            clip.chromaSimilarity = slSim.value
+            clip.chromaSmoothness = slSmooth.value
+            val new = clip.copy()
+
+            undoRedo.register(
+                undo = { clips[idx] = old; clipAdapter.notifyItemChanged(idx); rebuildTimeline() },
+                redo = { clips[idx] = new; clipAdapter.notifyItemChanged(idx); rebuildTimeline() }
+            )
+
+            d.dismiss()
+            applyChromaKeyFilter(idx)
+        }
+    }.also { root.addView(it) }
+
+    d.setContentView(root); d.show()
+}
+
+internal fun VideoEditingActivity.applyChromaKeyFilter(idx: Int) {
+    val clip = clips.getOrNull(idx) ?: return
+    val color = clip.chromaKeyColor ?: "00FF00"
+    val sim = clip.chromaSimilarity
+    val smooth = clip.chromaSmoothness
+
+    // Chroma key followed by a default background (black) to show transparency effect
+    val filter = "chromakey=0x${color}:${sim}:${smooth}"
+    applyFilter(filter)
+}
+
+internal fun VideoEditingActivity.showOverlaySheet() {
+    val clip = clips.getOrNull(selectedClipIndex) ?: return
+    val d = BottomSheetDialog(this)
+    val root = LinearLayout(this).apply {
+        orientation = LinearLayout.VERTICAL
+        setBackgroundColor(editorColor(R.color.colorSheetBackground))
+        setPadding(32, 32, 32, 60)
+    }
+
+    TextView(this).apply {
+        text = "🎬 تأثيرات التراكب (Video Overlays)"
+        textSize = 18f; setTextColor(Color.WHITE); setTypeface(null, Typeface.BOLD)
+        setPadding(0, 0, 0, 16)
+    }.also { root.addView(it) }
+
+    val rv = RecyclerView(this).apply {
+        layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, this@showOverlaySheet.run { 320.dp })
+        layoutManager = GridLayoutManager(this@showOverlaySheet, 3)
+    }
+
+    val effects = OverlayEffect.getAll()
+    rv.adapter = OverlaySelectorAdapter(effects, clip.overlayEffect) { e ->
+        clip.overlayEffect = e.filter
+        applyOverlayEffect(selectedClipIndex)
+        showSnack("✓ تم تطبيق: ${e.label}")
+    }
+    root.addView(rv)
+
+    MaterialButton(this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+        text = getString(R.string.btn_apply_to_all)
+        setTextColor(editorColor(R.color.colorAccentOrange))
+        layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = 20 }
+        setOnClickListener {
+            val currentEff = clip.overlayEffect
+            val backups = clips.map { it.overlayEffect }
+            clips.forEach { it.overlayEffect = currentEff }
+            clipAdapter.notifyDataSetChanged()
+            undoRedo.commit(
+                undo = { backups.forEachIndexed { i, s -> clips[i].overlayEffect = s }; clipAdapter.notifyDataSetChanged() },
+                redo = { clips.forEach { it.overlayEffect = currentEff }; clipAdapter.notifyDataSetChanged() }
+            )
+            d.dismiss()
+            showSnack(getString(R.string.snack_applied_to_all))
+        }
+    }.also { root.addView(it) }
+
+    d.setContentView(root); d.show()
+}
+
+internal fun VideoEditingActivity.applyOverlayEffect(idx: Int) {
+    val clip = clips.getOrNull(idx) ?: return
+    val filter = clip.overlayEffect ?: ""
+    applyFilter(filter) // Re-uses the existing filter application logic
+}
+
+internal fun VideoEditingActivity.showSplitScreenSheet() {
+    val d = BottomSheetDialog(this)
+    val root = LinearLayout(this).apply {
+        orientation = LinearLayout.VERTICAL; setBackgroundColor(editorColor(R.color.colorSheetBackground))
+        setPadding(32, 32, 32, 60)
+    }
+    TextView(this).apply { text = "🔲 " + getString(R.string.split_screen); textSize = 18f; setTextColor(Color.WHITE); setTypeface(null, Typeface.BOLD); setPadding(0, 0, 0, 20) }.also { root.addView(it) }
+
+    fun addOption(label: String, icon: String, mode: Int) {
+        LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL
+            setPadding(16, 16, 16, 16); setBackgroundColor(editorColor(R.color.colorCardDark))
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { bottomMargin = 8 }
+            isClickable = true; isFocusable = true
+            addView(TextView(this@showSplitScreenSheet).apply { text = icon; textSize = 24f; setPadding(0, 0, 16, 0) })
+            addView(TextView(this@showSplitScreenSheet).apply { text = label; textSize = 16f; setTextColor(Color.WHITE); layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f) })
+            setOnClickListener { d.dismiss(); splitScreenMode = mode; splitScreenPicker.launch("video/*") }
+        }.also { root.addView(it) }
+    }
+
+    addOption(getString(R.string.split_side_by_side), "🌓", 1)
+    addOption(getString(R.string.split_top_bottom), "➗", 2)
+    addOption(getString(R.string.split_quad), "田", 3)
+
+    d.setContentView(root); d.show()
+}
+
+internal fun VideoEditingActivity.applySplitScreen(uris: List<Uri>) {
+    if (uris.isEmpty()) return
+    val idx = selectedClipIndex
+    val clip = clips.getOrNull(idx) ?: return
+    val baseline = clip.copy()
+
+    lifecycleScope.launch {
+        showLoading(true)
+        try {
+            val mainIn = withContext(Dispatchers.IO) { materializeLocalPath(clip.uri) } ?: return@launch
+            val secondIn = withContext(Dispatchers.IO) { materializeLocalPath(uris[0]) } ?: return@launch
+            val out = getOutputFile("split_screen")
+
+            // FFmpeg Split Screen Logic
+            val filter = when (splitScreenMode) {
+                1 -> "[0:v]scale=iw/2:ih[v0];[1:v]scale=iw/2:ih[v1];[v0][v1]hstack=inputs=2"
+                2 -> "[0:v]scale=iw:ih/2[v0];[1:v]scale=iw:ih/2[v1];[v0][v1]vstack=inputs=2"
+                3 -> {
+                    val thirdIn = if (uris.size > 1) withContext(Dispatchers.IO) { materializeLocalPath(uris[1]) } else mainIn
+                    val fourthIn = if (uris.size > 2) withContext(Dispatchers.IO) { materializeLocalPath(uris[2]) } else mainIn
+                    "-i \"$thirdIn\" -i \"$fourthIn\" -filter_complex \"[0:v]scale=iw/2:ih/2[v0];[1:v]scale=iw/2:ih/2[v1];[2:v]scale=iw/2:ih/2[v2];[3:v]scale=iw/2:ih/2[v3];[v0][v1][v2][v3]xstack=inputs=4:layout=0_0|w0_0|0_h0|w0_h0\""
+                }
+                else -> ""
+            }
+
+            val cmd = if (splitScreenMode == 3) {
+                 "-i \"$mainIn\" -i \"$secondIn\" $filter -c:a copy \"${out.absolutePath}\" -y"
+            } else {
+                 "-i \"$mainIn\" -i \"$secondIn\" -filter_complex \"$filter\" -c:a copy \"${out.absolutePath}\" -y"
+            }
+
+            val result = withContext(Dispatchers.IO) { FfmpegExecutor.executeSync(cmd) }
+            if (FfmpegExecutor.isSuccess(result)) {
+                val newUri = Uri.fromFile(out)
+                val dur = withContext(Dispatchers.IO) { getClipDurationMs(newUri) }
+                val newClip = baseline.copy(uri = newUri, durationMs = dur, startTrimMs = 0L, endTrimMs = 0L)
+                withContext(Dispatchers.Main) {
+                    clips[idx] = newClip
+                    clipAdapter.notifyItemChanged(idx)
+                    reloadPlaylist(maintainPosition = true, targetIdx = idx)
+                    rebuildTimeline(); loadThumb(idx)
+                    showSnack("✓ Split screen applied")
+                }
+            }
+        } finally {
+            showLoading(false)
+        }
+    }
+}

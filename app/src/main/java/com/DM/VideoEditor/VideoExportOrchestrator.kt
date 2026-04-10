@@ -38,6 +38,7 @@ class VideoExportOrchestrator(private val context: Context) {
         val textOverlays = job.textOverlays
         val totalDurationMs = job.totalDurationMs
         val scaleFilter = job.scaleFilter
+        val stickerOverlays = job.stickerOverlays
         try {
             val processedPaths = mutableListOf<String>()
             for (i in clips.indices) {
@@ -59,14 +60,37 @@ class VideoExportOrchestrator(private val context: Context) {
             }
 
             onProgress(55, app.getString(R.string.export_status_text))
-            val withText = if (textOverlays.isNotEmpty()) applyTextOverlays(merged, textOverlays) else merged
+            val withText = if (textOverlays.isNotEmpty() || stickerOverlays.isNotEmpty())
+                applyTextOverlays(merged, textOverlays, stickerOverlays) else merged
 
             onProgress(65, app.getString(R.string.export_status_final))
             val finalOut = getOutputFile("DM_Video_${System.currentTimeMillis()}")
             val scaleVf = if (scaleFilter.isNotBlank()) "-vf \"$scaleFilter\"" else ""
             val qv = job.videoQuality
+            val ducking = job.isAudioDuckingEnabled
+            val bgMusic = job.projectAudioUri
+
+            val encoder = "mpeg4"
+            val qualityArgs = "-q:v $qv"
+
+            var finalInput = withText
+            var audioFilter = ""
+            var additionalInputs = ""
+
+            if (bgMusic != null) {
+                val localMusic = materializeLocalPath(Uri.parse(bgMusic))
+                if (localMusic != null) {
+                    additionalInputs = "-i \"$localMusic\" "
+                    audioFilter = if (ducking) {
+                        "-filter_complex \"[1:a]volume=0.3[bglow];[0:a][bglow]amix=inputs=2:duration=first:dropout_transition=2[aout]\" -map 0:v -map \"[aout]\""
+                    } else {
+                        "-filter_complex \"[0:a][1:a]amix=inputs=2:duration=first[aout]\" -map 0:v -map \"[aout]\""
+                    }
+                }
+            }
+
             val cmd =
-                "-i \"${withText.absolutePath}\" $scaleVf -c:v mpeg4 -q:v $qv -c:a aac -b:a 128k -movflags +faststart \"${finalOut.absolutePath}\" -y"
+                "-i \"${finalInput.absolutePath}\" $additionalInputs $scaleVf -c:v $encoder $qualityArgs $audioFilter -c:a aac -b:a 128k -movflags +faststart \"${finalOut.absolutePath}\" -y"
 
             val semaphore = Semaphore(0)
             var finalEncodeOk = false
@@ -186,40 +210,128 @@ class VideoExportOrchestrator(private val context: Context) {
         return if (ok && out.exists() && out.length() > 0L) out else null
     }
 
-    private fun applyTextOverlays(input: File, textOverlays: List<TextOverlay>): File {
-        if (textOverlays.isEmpty()) return input
-        val pngs = mutableListOf<File>()
+    private sealed class OverlayInput {
+        data class StaticPng(val file: File, val overlay: Any) : OverlayInput()
+        data class AnimatedSequence(val dir: File, val overlay: StickerOverlay) : OverlayInput()
+    }
+
+    private suspend fun applyTextOverlays(input: File, textOverlays: List<TextOverlay>, stickerOverlays: List<StickerOverlay> = emptyList()): File {
+        if (textOverlays.isEmpty() && stickerOverlays.isEmpty()) return input
+
+        val inputs = mutableListOf<OverlayInput>()
+
         try {
+            // Render Text
             for ((idx, o) in textOverlays.withIndex()) {
                 val f = File(app.cacheDir, "text_overlay_${idx}_${System.currentTimeMillis()}.png")
-                if (!TextOverlayBitmapRenderer.renderToPng(o, projectW, projectH, f)) {
-                    Log.e(TAG, "PNG render failed for overlay $idx")
-                    return input
+                if (TextOverlayBitmapRenderer.renderToPng(o, projectW, projectH, f)) {
+                    inputs.add(OverlayInput.StaticPng(f, o))
                 }
-                pngs.add(f)
             }
-            val out = getOutputFile("with_text")
+            // Render Sticker Animation Sequences
+            for ((idx, s) in stickerOverlays.withIndex()) {
+                val dir = File(app.cacheDir, "sticker_frames_${idx}_${System.currentTimeMillis()}")
+                val extracted = LottieFrameExtractor.extractFrames(app, s.lottieUrl, dir, 512, 512, 30)
+                if (extracted != null) {
+                    inputs.add(OverlayInput.AnimatedSequence(dir, s))
+                } else {
+                    // Fallback to static placeholder if extraction fails
+                    val f = File(app.cacheDir, "sticker_fallback_${idx}.png")
+                    TextOverlayBitmapRenderer.renderStickerPlaceholder(s, projectW, projectH, f)
+                    inputs.add(OverlayInput.StaticPng(f, s))
+                }
+            }
+
+            if (inputs.isEmpty()) return input
+
+            val out = getOutputFile("with_overlays")
             val inputArgs = buildString {
                 append("-i \"${input.absolutePath}\" ")
-                pngs.forEach { append("-loop 1 -i \"${it.absolutePath}\" ") }
-            }
-            val sb = StringBuilder()
-            var label = "[0:v]"
-            textOverlays.forEachIndexed { i, o ->
-                val next = if (i == textOverlays.lastIndex) "[vout]" else "[vt$i]"
-                val enable = when {
-                    o.endSec > 0 && o.startSec > 0 -> ":enable='between(t,${o.startSec},${o.endSec})'"
-                    o.endSec > 0 -> ":enable='lte(t,${o.endSec})'"
-                    o.startSec > 0 -> ":enable='gte(t,${o.startSec})'"
-                    else -> ""
+                inputs.forEach { inputType ->
+                    when (inputType) {
+                        is OverlayInput.StaticPng -> append("-loop 1 -i \"${inputType.file.absolutePath}\" ")
+                        is OverlayInput.AnimatedSequence -> append("-framerate 30 -i \"${inputType.dir.absolutePath}/frame_%04d.png\" ")
+                    }
                 }
-                sb.append("${label}[${i + 1}:v]overlay=0:0:shortest=1$enable$next;")
-                label = next
             }
+
+            val sb = StringBuilder()
+            var currentLabel = "[0:v]"
+
+            inputs.forEachIndexed { i, overlayInput ->
+                val nextLabel = if (i == inputs.lastIndex) "[vout]" else "[ov$i]"
+                val inputIdx = i + 1
+
+                val (enable, tx, ty, animExpr) = when (overlayInput) {
+                    is OverlayInput.StaticPng -> {
+                        val o = overlayInput.overlay
+                        if (o is TextOverlay) {
+                            val en = when {
+                                o.endSec > 0 && o.startSec > 0 -> "between(t,${o.startSec},${o.endSec})"
+                                o.endSec > 0 -> "lte(t,${o.endSec})"
+                                o.startSec > 0 -> "gte(t,${o.startSec})"
+                                else -> "1"
+                            }
+                            val tx = o.normalizedX * projectW
+                            val ty = o.normalizedY * projectH
+                            val anim = when (o.animationType) {
+                                "slide_in" -> {
+                                    val start = o.startSec
+                                    val dur = 0.5f
+                                    "x=$tx:y='if(between(t,$start,${start+dur}), H-(H-$ty)*((t-$start)/$dur), $ty)'"
+                                }
+                                "zoom_fade" -> {
+                                    val start = o.startSec
+                                    val dur = 0.5f
+                                    "x=$tx:y=$ty:alpha='if(between(t,$start,${start+dur}), (t-$start)/$dur, 1)'"
+                                }
+                                "lower_third" -> {
+                                    val start = o.startSec
+                                    val dur = 0.6f
+                                    val targetY = projectH * 0.85f
+                                    "x='if(between(t,$start,${start+dur}), -w+(w+$tx)*((t-$start)/$dur), $tx)':y=$targetY"
+                                }
+                                "typewriter" -> "alpha='if(lt(t,${o.startSec + 0.1}), 0, 1)'"
+                                else -> ""
+                            }
+                            listOf(en, tx, ty, anim)
+                        } else if (o is StickerOverlay) {
+                            val en = when {
+                                o.endSec > 0 && o.startSec > 0 -> "between(t,${o.startSec},${o.endSec})"
+                                o.endSec > 0 -> "lte(t,${o.endSec})"
+                                o.startSec > 0 -> "gte(t,${o.startSec})"
+                                else -> "1"
+                            }
+                            listOf(en, o.normalizedX * projectW, o.normalizedY * projectH, "")
+                        } else listOf("1", 0f, 0f, "")
+                    }
+                    is OverlayInput.AnimatedSequence -> {
+                        val o = overlayInput.overlay
+                        val en = when {
+                            o.endSec > 0 && o.startSec > 0 -> "between(t,${o.startSec},${o.endSec})"
+                            o.endSec > 0 -> "lte(t,${o.endSec})"
+                            o.startSec > 0 -> "gte(t,${o.startSec})"
+                            else -> "1"
+                        }
+                        listOf(en, o.normalizedX * projectW, o.normalizedY * projectH, "")
+                    }
+                }
+
+                val enableStr = enable as String
+                val txVal = tx as Float
+                val tyVal = ty as Float
+                val animStr = animExpr as String
+
+                val baseOverlay = if (animStr.contains("x=") || animStr.contains("y=")) "overlay=shortest=1" else "overlay=$txVal:$tyVal:shortest=1"
+                val opts = if (animStr.isNotEmpty()) ":$animStr" else ""
+                sb.append("${currentLabel}[${inputIdx}:v]${baseOverlay}:enable='$enableStr'$opts$nextLabel;")
+                currentLabel = nextLabel
+            }
+
             val fc = sb.toString().trimEnd(';')
             val withAudio = FFmpegCommandBuilder.hasAudioStream(input.absolutePath)
             val audioOpts = if (withAudio) "-map 0:a -c:a copy" else "-an"
-            val cmd = "$inputArgs-filter_complex \"$fc\" -map \"[vout]\" -c:v mpeg4 -q:v 3 $audioOpts \"${out.absolutePath}\" -y"
+            val cmd = "$inputArgs-filter_complex \"$fc\" -map \"[vout]\" -c:v mpeg4 -q:v 5 $audioOpts \"${out.absolutePath}\" -y"
             val ovResult = FfmpegExecutor.executeSync(cmd)
             return if (FfmpegExecutor.isSuccess(ovResult) && out.exists() && out.length() > 0) out
             else {
@@ -227,7 +339,12 @@ class VideoExportOrchestrator(private val context: Context) {
                 input
             }
         } finally {
-            pngs.forEach { try { it.delete() } catch (_: Exception) {} }
+            inputs.forEach { input ->
+                when (input) {
+                    is OverlayInput.StaticPng -> try { input.file.delete() } catch (_: Exception) {}
+                    is OverlayInput.AnimatedSequence -> try { input.dir.deleteRecursively() } catch (_: Exception) {}
+                }
+            }
         }
     }
 

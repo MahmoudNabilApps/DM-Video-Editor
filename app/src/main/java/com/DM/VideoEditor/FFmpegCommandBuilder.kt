@@ -54,6 +54,10 @@ object FFmpegCommandBuilder {
         "circleopen"  -> "circleopen"
         "wipeup"      -> "wipeup"
         "wipedown"    -> "wipedown"
+        "pixelize"    -> "pixelize"
+        "radial"      -> "radial"
+        "squeezev"    -> "squeezev"
+        "smoothstep"  -> "smoothstep"
         else          -> "fade"
     }
 
@@ -86,19 +90,46 @@ object FFmpegCommandBuilder {
 
         val trimArgs = if (hasTrim) "-ss ${clip.startTrimMs / 1000.0} -to ${clip.endTrimMs / 1000.0}" else ""
 
+        // Chroma key support
+        var chromaFilter = ""
+        if (clip.chromaKeyColor != null) {
+            chromaFilter = "chromakey=0x${clip.chromaKeyColor}:${clip.chromaSimilarity}:${clip.chromaSmoothness},"
+        }
+
         // Video filter chain — always includes scale+pad for uniform resolution
-        val scaleFilter = "scale=${targetW}:${targetH}:force_original_aspect_ratio=decrease," +
+        // Video filter chain — always includes scale+pad for uniform resolution
+        val scaleFilter = "${chromaFilter}scale=${targetW}:${targetH}:force_original_aspect_ratio=decrease," +
                           "pad=${targetW}:${targetH}:(ow-iw)/2:(oh-ih)/2:color=${padColor}," +
                           "setsar=1,fps=30,format=yuv420p"
 
         val vfParts = mutableListOf<String>()
-        if (hasSpeed) vfParts.add("setpts=${1f / clip.speedFactor}*PTS")
+        if (clip.speedRamp != null) {
+            val ramp = when (clip.speedRamp) {
+                "slow_fast" -> "setpts='if(lt(t,0.5), 2*PTS, 0.5*PTS)'"
+                "fast_slow" -> "setpts='if(lt(t,0.5), 0.5*PTS, 2*PTS)'"
+                else -> "setpts=${1f / clip.speedFactor}*PTS"
+            }
+            vfParts.add(ramp)
+        } else if (hasSpeed) {
+            vfParts.add("setpts=${1f / clip.speedFactor}*PTS")
+        }
+
         if (hasFilter) vfParts.add(clip.filterCmd)
+        if (!clip.overlayEffect.isNullOrBlank()) vfParts.add(clip.overlayEffect!!)
         vfParts.add(scaleFilter)   // always last
 
         val afParts = mutableListOf<String>()
         if (hasSpeed) afParts.add(atempoChain(clip.speedFactor))
         if (hasVolume) afParts.add("volume=${clip.volume}")
+
+        if (clip.audioFadeInMs > 0) {
+            afParts.add("afade=t=in:st=0:d=${clip.audioFadeInMs / 1000.0}")
+        }
+        if (clip.audioFadeOutMs > 0) {
+            val durSec = clip.durationMs / 1000.0
+            val startFadeOut = (durSec - (clip.audioFadeOutMs / 1000.0)).coerceAtLeast(0.0)
+            afParts.add("afade=t=out:st=$startFadeOut:d=${clip.audioFadeOutMs / 1000.0}")
+        }
 
         return when {
             afParts.isNotEmpty() && hasAudio -> {
@@ -106,7 +137,7 @@ object FFmpegCommandBuilder {
                 val afStr = "[0:a]${afParts.joinToString(",")}[a]"
                 "$trimArgs -i \"$inputPath\" -filter_complex \"$vfStr;$afStr\" " +
                     "-map \"[v]\" -map \"[a]\" " +
-                    "-c:v mpeg4 -q:v 3 -c:a aac -b:a 128k -ar 44100 " +
+                    "-c:v mpeg4 -q:v 5 -c:a aac -b:a 128k -ar 44100 " +
                     "-movflags +faststart \"$outputPath\" -y"
             }
             afParts.isNotEmpty() && !hasAudio -> {
@@ -114,14 +145,14 @@ object FFmpegCommandBuilder {
                 val vfStr = "[0:v]${vfParts.joinToString(",")}[v]"
                 "$trimArgs -i \"$inputPath\" -filter_complex \"$vfStr\" " +
                     "-map \"[v]\" -an " +
-                    "-c:v mpeg4 -q:v 3 " +
+                    "-c:v mpeg4 -q:v 5 " +
                     "-movflags +faststart \"$outputPath\" -y"
             }
             else -> {
                 val vfStr = vfParts.joinToString(",")
                 val audioOut = if (hasAudio) "-c:a aac -b:a 128k -ar 44100" else "-an"
                 "$trimArgs -i \"$inputPath\" -vf \"$vfStr\" " +
-                    "-c:v mpeg4 -q:v 3 $audioOut " +
+                    "-c:v mpeg4 -q:v 5 $audioOut " +
                     "-movflags +faststart \"$outputPath\" -y"
             }
         }
@@ -187,12 +218,12 @@ object FFmpegCommandBuilder {
         return if (mergeAudio) {
             "$inputArgs -filter_complex \"${sb.trimEnd(';')}\" " +
                 "-map \"[vout]\" -map \"[aout]\" " +
-                "-c:v mpeg4 -q:v 3 -c:a aac -b:a 128k -ar 44100 " +
+                "-c:v mpeg4 -q:v 5 -c:a aac -b:a 128k -ar 44100 " +
                 "-movflags +faststart \"$outputPath\" -y"
         } else {
             "$inputArgs -filter_complex \"${sb.trimEnd(';')}\" " +
                 "-map \"[vout]\" " +
-                "-c:v mpeg4 -q:v 3 -an " +
+                "-c:v mpeg4 -q:v 5 -an " +
                 "-movflags +faststart \"$outputPath\" -y"
         }
     }
@@ -203,9 +234,9 @@ object FFmpegCommandBuilder {
      */
     fun buildConcatCmd(concatListFile: File, outputPath: String, includeAudio: Boolean = true): String {
         val tail = if (includeAudio) {
-            "-c:v mpeg4 -q:v 3 -c:a aac -b:a 128k -ar 44100 -movflags +faststart "
+            "-c:v mpeg4 -q:v 5 -c:a aac -b:a 128k -ar 44100 -movflags +faststart "
         } else {
-            "-c:v mpeg4 -q:v 3 -an -movflags +faststart "
+            "-c:v mpeg4 -q:v 5 -an -movflags +faststart "
         }
         return "-f concat -safe 0 -protocol_whitelist file,crypto,data,saf -i \"${concatListFile.absolutePath}\" " +
             tail + "\"$outputPath\" -y"
@@ -245,7 +276,7 @@ object FFmpegCommandBuilder {
         val fc = sb.toString()
         return "$inputArgs -filter_complex \"$fc\" " +
             "-map \"[vout]\" -map \"[aout]\" " +
-            "-c:v mpeg4 -q:v 3 -c:a aac -b:a 128k -ar 44100 " +
+            "-c:v mpeg4 -q:v 5 -c:a aac -b:a 128k -ar 44100 " +
             "-movflags +faststart \"$outputPath\" -y"
     }
 
@@ -259,6 +290,18 @@ object FFmpegCommandBuilder {
     )
     fun buildDrawtextFilters(overlays: List<TextOverlay>, videoW: Int = 1280, videoH: Int = 720): String {
         throw UnsupportedOperationException("Use TextOverlayBitmapRenderer instead")
+    }
+
+    /**
+     * Check if a specific encoder is available in this FFmpeg build.
+     */
+    fun isEncoderAvailable(encoderName: String): Boolean {
+        return try {
+            val session = com.arthenica.ffmpegkit.FFmpegKit.execute("-encoders")
+            session.allLogsAsString.contains(encoderName)
+        } catch (_: Exception) {
+            false
+        }
     }
 
     /**

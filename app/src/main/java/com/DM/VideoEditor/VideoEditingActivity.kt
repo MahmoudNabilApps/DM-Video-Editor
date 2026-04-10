@@ -76,7 +76,14 @@ data class VideoClip(
     var transition: String = "none",
     var speedFactor: Float = 1.0f,
     var filterCmd: String = "",
-    var volume: Float = 1.0f
+    var volume: Float = 1.0f,
+    var audioFadeInMs: Long = 0L,
+    var audioFadeOutMs: Long = 0L,
+    var chromaKeyColor: String? = null, // e.g. "00FF00"
+    var chromaSimilarity: Float = 0.1f,
+    var chromaSmoothness: Float = 0.05f,
+    var overlayEffect: String? = null, // e.g. "film_grain", "old_film"
+    var speedRamp: String? = null // e.g. "slow_fast", "fast_slow"
 ) : Parcelable
 
 @Parcelize
@@ -96,7 +103,20 @@ data class TextOverlay(
     var normalizedX: Float = 0.5f,
     var normalizedY: Float = 0.8f,
     var textScale: Float = 1.0f,
-    var textRotation: Float = 0f
+    var textRotation: Float = 0f,
+    var animationType: String = "none" // none, slide_in, zoom_fade, typewriter
+) : Parcelable
+
+@Parcelize
+data class StickerOverlay(
+    val id: Long = System.currentTimeMillis(),
+    var lottieUrl: String,
+    var startSec: Float = 0f,
+    var endSec: Float = -1f,
+    var normalizedX: Float = 0.5f,
+    var normalizedY: Float = 0.5f,
+    var scale: Float = 1.0f,
+    var rotation: Float = 0f
 ) : Parcelable
 
 
@@ -110,6 +130,7 @@ class VideoEditingActivity : AppCompatActivity() {
 
     internal val clips = mutableListOf<VideoClip>()
     internal val textOverlays = mutableListOf<TextOverlay>()
+    internal val stickerOverlays = mutableListOf<StickerOverlay>()
     internal var selectedClipIndex = 0
     internal var isVideoLoaded = false
     internal var progressUpdateJob: Job? = null
@@ -146,6 +167,9 @@ class VideoEditingActivity : AppCompatActivity() {
     // Category toolbar state
     internal var currentCategory = "edit"
 
+    // Audio Ducking state
+    internal var isAudioDuckingEnabled = false
+
     // PIP state
     internal var pipPosition = 0 // 0=TR, 1=TL, 2=BR, 3=BL, 4=Center
 
@@ -155,7 +179,7 @@ class VideoEditingActivity : AppCompatActivity() {
     internal var isRecording = false
 
     // dp extension
-    private val Int.dp: Int get() = (this * resources.displayMetrics.density).toInt()
+    internal val Int.dp: Int get() = (this * resources.displayMetrics.density).toInt()
 
     // Launchers
     internal val addVideoLauncher = registerForActivityResult(ActivityResultContracts.GetMultipleContents()) { uris ->
@@ -173,6 +197,10 @@ class VideoEditingActivity : AppCompatActivity() {
     }
     internal val replaceClipLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         uri?.let { replaceCurrentClip(it) }
+    }
+    internal var splitScreenMode: Int = 0 // 0=None, 1=H, 2=V, 3=Quad
+    internal val splitScreenPicker = registerForActivityResult(ActivityResultContracts.GetMultipleContents()) { uris ->
+        if (uris.isNotEmpty()) applySplitScreen(uris)
     }
 
     private val exportFinishedReceiver = object : BroadcastReceiver() {
@@ -258,7 +286,10 @@ class VideoEditingActivity : AppCompatActivity() {
                     clips.addAll(draft.clips)
                     textOverlays.clear()
                     textOverlays.addAll(draft.textOverlays)
+                    stickerOverlays.clear()
+                    stickerOverlays.addAll(draft.stickerOverlays)
                     draft.projectAudioUri?.let { projectAudioUri = it }
+                    isAudioDuckingEnabled = draft.isAudioDuckingEnabled
                     withContext(Dispatchers.IO) {
                         clips.forEach { clip ->
                             if (clip.durationMs <= 0L) {
@@ -376,7 +407,9 @@ class VideoEditingActivity : AppCompatActivity() {
                 draftId         = currentDraftId,
                 clips           = clips,
                 textOverlays    = textOverlays,
-                projectAudioUri = projectAudioUri
+                projectAudioUri = projectAudioUri,
+                stickerOverlays = stickerOverlays,
+                isAudioDuckingEnabled = isAudioDuckingEnabled
             )
         } catch (e: Exception) {
             Log.e("VideoEditor", "saveDraftSnapshot failed", e)
@@ -539,6 +572,7 @@ internal fun setupCategoryToolbar() {
         binding.catAdjust.setOnClickListener  { selectCategory("adjust") }
         binding.catCanvas.setOnClickListener  { selectCategory("canvas") }
         binding.btnAddTextOverlay.setOnClickListener { showTextSheet(null) }
+        binding.btnAddSticker.setOnClickListener { showStickerSheet() }
         selectCategory("edit")
     }
 internal fun selectCategory(cat: String) {
@@ -568,6 +602,7 @@ internal fun populateSubTools(cat: String) {
         binding.subToolsContainer.removeAllViews()
         when (cat) {
             "edit" -> {
+                addSubTool("🎬", "إنترو")      { showIntroTemplateSheet() }
                 addSubTool("✂", "قص")       { showTrimSheet() }
                 addSubTool("✂✂", "تقسيم")     { splitClipAtCurrentPosition() }
                 addSubTool("⚡", "السرعة")      { showSpeedSheet() }
@@ -598,7 +633,8 @@ internal fun populateSubTools(cat: String) {
                 addSubTool("📋", "قائمة النصوص") { toggleTextPanel() }
             }
             "sticker" -> {
-                addSubTool("😀", "الكل")       { showEmojiSheet() }
+                addSubTool("✨", "متحركة")    { showStickerSheet() }
+                addSubTool("😀", "إيموجي")     { showEmojiSheet() }
                 addSubTool("❤", "قلوب")     { showEmojiSheetCategory("hearts") }
                 addSubTool("🎉", "احتفال")     { showEmojiSheetCategory("party") }
                 addSubTool("⭐", "نجوم")     { showEmojiSheetCategory("stars") }
@@ -609,6 +645,8 @@ internal fun populateSubTools(cat: String) {
                     if (clips.size < 2) showSnack(getString(R.string.snack_add_two_clips_for_transitions))
                     else showTransitionSheet(selectedClipIndex)
                 }
+                addSubTool("🎭", "تراكب") { showOverlaySheet() }
+                addSubTool("💚", "كروما")    { showChromaKeySheet() }
                 addSubTool("✨", "توهج")       { applyEffectPreset("glow") }
                 addSubTool("📺", "ريترو")      { applyEffectPreset("retro") }
                 addSubTool("🎬", "سينمائي")  { applyEffectPreset("cinematic") }
@@ -642,6 +680,7 @@ internal fun populateSubTools(cat: String) {
                 addSubTool("📐", "النسبة")      { showCropSheet() }
                 addSubTool("📱", "PIP")        { showPipSheet() }
                 addSubTool("➕", "إضافة مقطع")   { addVideoLauncher.launch("video/*") }
+                addSubTool("🔲", "تقسيم الشاشة") { showSplitScreenSheet() }
             }
         }
     }
@@ -879,6 +918,7 @@ internal fun startProgressUpdater() {
 internal fun bumpOverlaysVersion() {
         overlaysVersion = System.currentTimeMillis()
         binding.textPreviewContainer.tag = -1L
+        updateTextPreview(player.currentPosition / 1000f)
     }
 
 internal fun updatePlayPause() {
@@ -942,7 +982,12 @@ internal fun execFfmpegClipReplace(
                 }
                 val newUri = Uri.fromFile(out)
                 val dur = withContext(Dispatchers.IO) { getClipDurationMs(newUri) }
-                val newClip = undoBaseline.copy(uri = newUri, durationMs = dur, startTrimMs = 0L, endTrimMs = 0L)
+                val newClip = undoBaseline.copy(
+                    uri = newUri,
+                    durationMs = dur,
+                    startTrimMs = 0L,
+                    endTrimMs = 0L
+                )
                 undoRedo.register(
                     undo = {
                         clips[idx] = undoBaseline

@@ -105,3 +105,35 @@ internal fun VideoEditingActivity.showEmojiSheetCategory(category: String) {
         d.setContentView(grid); d.show()
     }
 
+internal fun VideoEditingActivity.showStickerSheet() {
+    val d = com.google.android.material.bottomsheet.BottomSheetDialog(this)
+    val root = LinearLayout(this).apply {
+        orientation = LinearLayout.VERTICAL; setBackgroundColor(editorColor(R.color.colorSheetBackground))
+        setPadding(24, 24, 24, 60)
+    }
+    TextView(this).apply { text = "✨ ملصقات متحركة (Stickers)"; textSize = 18f; setTextColor(Color.WHITE); setTypeface(null, Typeface.BOLD); setPadding(0, 0, 0, 16) }.also { root.addView(it) }
+
+    val rv = androidx.recyclerview.widget.RecyclerView(this).apply {
+        layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, (300 * resources.displayMetrics.density).toInt())
+        layoutManager = androidx.recyclerview.widget.GridLayoutManager(this@showStickerSheet, 3)
+    }
+    val mockStickers = StickerMetadata.getMockAssets()
+    rv.adapter = StickerSelectorAdapter(mockStickers) { s ->
+        d.dismiss()
+        addStickerOverlay(s)
+    }
+    root.addView(rv)
+    d.setContentView(root); d.show()
+}
+
+internal fun VideoEditingActivity.addStickerOverlay(meta: StickerMetadata) {
+    val startSec = player.currentPosition / 1000f
+    val overlay = StickerOverlay(
+        lottieUrl = meta.lottieUrl,
+        startSec = startSec
+    )
+    stickerOverlays.add(overlay)
+    bumpOverlaysVersion()
+    rebuildTimeline()
+    showSnack("✓ تمت إضافة ملصق: ${meta.name}")
+}

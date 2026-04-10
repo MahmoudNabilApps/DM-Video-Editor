@@ -144,9 +144,29 @@ internal fun VideoEditingActivity.rebuildTimeline() {
             )
         }
 
+        // ── Sticker blocks ─────
+        val baseRow = rowSlots.size
+        val sBlocks = stickerOverlays.mapIndexed { idx, st ->
+            val startMs = (st.startSec * 1000).toLong().coerceAtLeast(0L)
+            val endMs   = if (st.endSec >= 0) (st.endSec * 1000).toLong() else totalMs
+            val durMs   = (endMs - startMs).coerceAtLeast(500L)
+
+            // For stickers, we simply assign them to high rows to avoid text overlap visually
+            val row = baseRow + idx
+
+            com.DM.VideoEditor.customviews.TextTimelineBlock(
+                id           = st.id,
+                overlayIndex = 1000 + idx, // offset for sticker distinction
+                startMs      = startMs,
+                durationMs   = durMs,
+                label        = "✨ Sticker",
+                trackRow     = row
+            )
+        }
+
         multiTrackTimeline.setTotalDuration(totalMs)
         multiTrackTimeline.setVideoBlocks(vBlocks)
-        multiTrackTimeline.setTextBlocks(tBlocks)
+        multiTrackTimeline.setTextBlocks(tBlocks + sBlocks)
 
         // REQ-6: Audio track — show last added audio URI as a teal block
         val aBlocks = if (projectAudioUri != null) {

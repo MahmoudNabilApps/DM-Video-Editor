@@ -95,7 +95,7 @@ class MultiTrackTimelineView @JvmOverloads constructor(
     private val videoH       get() = 72f * density
     private val textRowH     get() = 40f * density
     private val audioRowH    get() = 36f * density
-    private val labelW       get() = 44f * density
+    private val labelW       get() = 56f * density
     private val edgeZone     get() = 22f * density
     private val addBtnW      get() = 44f * density
 
@@ -115,11 +115,11 @@ class MultiTrackTimelineView @JvmOverloads constructor(
     // ── Paints ─────────────────────────────────────────────────────────────
     private val pBg        = Paint().apply { color = Color.parseColor("#0D0D0D") }
     private val pRulerBg   = Paint().apply { color = Color.parseColor("#141414") }
-    private val pVTrackBg  = Paint().apply { color = Color.parseColor("#0F0F0F") }
-    private val pTTrackBg  = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.parseColor("#0A0A18") }
-    private val pATrackBg  = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.parseColor("#061A12") }
-    private val pTick      = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.parseColor("#333333"); style = Paint.Style.STROKE; strokeWidth = 1f }
-    private val pTickMaj   = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.parseColor("#555555"); style = Paint.Style.STROKE; strokeWidth = 1.5f }
+    private val pVTrackBg  = Paint().apply { color = Color.parseColor("#121212") }
+    private val pTTrackBg  = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.parseColor("#151525") }
+    private val pATrackBg  = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.parseColor("#0F1A15") }
+    private val pTick      = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.parseColor("#444444"); style = Paint.Style.STROKE; strokeWidth = 1f }
+    private val pTickMaj   = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.parseColor("#666666"); style = Paint.Style.STROKE; strokeWidth = 1.5f }
     private val pRulerTxt  = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.parseColor("#888888"); textAlign = Paint.Align.CENTER; typeface = Typeface.MONOSPACE }
     private val pVBlock    = Paint(Paint.ANTI_ALIAS_FLAG)
     private val pVBorder   = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE }
@@ -256,14 +256,27 @@ class MultiTrackTimelineView @JvmOverloads constructor(
 
     // ─ Track backgrounds ──────────────────────────────────────────────────
     private fun drawTrackBgs(canvas: Canvas) {
+        // Video Track
         canvas.drawRect(labelW, videoTrackTop, width.toFloat(), videoTrackBot, pVTrackBg)
+        canvas.drawLine(0f, videoTrackBot, width.toFloat(), videoTrackBot, pSep)
+
+        // Text Tracks - Professional lane separation
         for (r in 0 until maxTextRows) {
-            // FIX-2: reuse pTTrackBg, just change its color — no allocation
-            pTTrackBg.color = if (r % 2 == 0) Color.parseColor("#0A0A18") else Color.parseColor("#0C0C1A")
+            // Selected text row highlight
+            val isRowSelected = textBlocks.any { it.trackRow == r && textBlocks.indexOf(it) == selTextIdx }
+            pTTrackBg.color = if (isRowSelected) Color.parseColor("#1A1A3A")
+                             else if (r % 2 == 0) Color.parseColor("#151525")
+                             else Color.parseColor("#1A1A2A")
+
             canvas.drawRect(labelW, textRowTop(r), width.toFloat(), textRowBot(r), pTTrackBg)
+            canvas.drawLine(0f, textRowBot(r), width.toFloat(), textRowBot(r), pSep)
         }
-        if (hasAudioTrack)
+
+        // Audio Track
+        if (hasAudioTrack) {
             canvas.drawRect(labelW, audioTrackTop, width.toFloat(), audioTrackBot, pATrackBg)
+            canvas.drawLine(0f, audioTrackBot, width.toFloat(), audioTrackBot, pSep)
+        }
     }
 
     // ─ Time ruler ─────────────────────────────────────────────────────────
@@ -518,19 +531,24 @@ class MultiTrackTimelineView @JvmOverloads constructor(
         canvas.drawRect(0f, 0f, labelW, height.toFloat(), pLabelBg)
         canvas.drawLine(labelW, 0f, labelW, height.toFloat(), pSep)
 
-        pLabelR.textSize = 7f * d; pLabelR.color = Color.parseColor("#666666")
+        pLabelR.textSize = 8f * d; pLabelR.color = Color.parseColor("#888888")
         canvas.drawText("TIME", labelW / 2f, rulerH / 2f + 3f * d, pLabelR)
 
-        pLabelR.textSize = 10f * d; pLabelR.color = Color.parseColor("#FF7A00")
-        canvas.drawText("\u25B6", labelW / 2f, (videoTrackTop + videoTrackBot) / 2f + 4f * d, pLabelR)
+        // Video Label
+        pLabelR.textSize = 14f * d; pLabelR.color = Color.parseColor("#FF7A00")
+        canvas.drawText("🎞", labelW / 2f, (videoTrackTop + videoTrackBot) / 2f + 5f * d, pLabelR)
 
-        pLabelR.textSize = 9f * d; pLabelR.color = Color.parseColor("#1E88E5")
-        for (r in 0 until maxTextRows)
-            canvas.drawText("T", labelW / 2f, (textRowTop(r) + textRowBot(r)) / 2f + 3f * d, pLabelR)
+        // Text Labels
+    pLabelR.textSize = 10f * d; pLabelR.color = Color.parseColor("#4488FF")
+    for (r in 0 until maxTextRows) {
+        val y = (textRowTop(r) + textRowBot(r)) / 2f + 4f * d
+        canvas.drawText("TEXT ${r + 1}", labelW / 2f, y, pLabelR)
+    }
 
+        // Audio Label
         if (hasAudioTrack) {
-            pLabelR.textSize = 8f * d; pLabelR.color = Color.parseColor("#4AC9A0")
-            canvas.drawText("A", labelW / 2f, (audioTrackTop + audioTrackBot) / 2f + 3f * d, pLabelR)
+            pLabelR.textSize = 14f * d; pLabelR.color = Color.parseColor("#2A8A6A")
+            canvas.drawText("♬", labelW / 2f, (audioTrackTop + audioTrackBot) / 2f + 5f * d, pLabelR)
         }
     }
 

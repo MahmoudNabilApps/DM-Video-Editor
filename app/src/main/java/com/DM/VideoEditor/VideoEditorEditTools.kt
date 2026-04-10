@@ -184,6 +184,27 @@ internal fun VideoEditingActivity.splitClipAtCurrentPosition() {
 internal fun VideoEditingActivity.showSpeedSheet() {
         val d = BottomSheetDialog(this); val v = layoutInflater.inflate(R.layout.speed_bottom_sheet_dialog, null)
         val sl = v.findViewById<Slider>(R.id.speedSlider); val tv = v.findViewById<TextView>(R.id.tvSpeedValue)
+
+        // REQ-SpeedRamp: Add ramp buttons
+        val rampContainer = android.widget.LinearLayout(this).apply {
+            orientation = android.widget.LinearLayout.HORIZONTAL; setPadding(0, 16, 0, 16)
+        }
+        fun addRamp(label: String, type: String?) {
+            com.google.android.material.button.MaterialButton(this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+                text = label; layoutParams = android.widget.LinearLayout.LayoutParams(0, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+                setOnClickListener {
+                    val clip = clips.getOrNull(selectedClipIndex) ?: return@setOnClickListener
+                    clip.speedRamp = type
+                    showSnack("Ramp selected: $label")
+                }
+            }.also { rampContainer.addView(it) }
+        }
+        addRamp("Normal", null)
+        addRamp("Slow-Fast", "slow_fast")
+        addRamp("Fast-Slow", "fast_slow")
+
+        (v as android.view.ViewGroup).addView(rampContainer, v.indexOfChild(v.findViewById(R.id.btnDoneSpeed)))
+
         sl.addOnChangeListener { _, value, _ -> tv.text = "${value}×" }
         fun set(x: Float) { sl.value = x.coerceIn(sl.valueFrom, sl.valueTo); tv.text = "${x}×" }
         v.findViewById<MaterialButton>(R.id.btn025x)?.setOnClickListener { set(0.25f) }

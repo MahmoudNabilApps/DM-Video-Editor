@@ -45,7 +45,9 @@ object ProjectDraftManager {
         draftId: String?,                     // null → create new draft
         clips: List<VideoClip>,
         textOverlays: List<TextOverlay>,
-        projectAudioUri: Uri?
+        projectAudioUri: Uri?,
+        stickerOverlays: List<StickerOverlay> = emptyList(),
+        isAudioDuckingEnabled: Boolean = false
     ): String {
         val id = draftId ?: System.currentTimeMillis().toString()
         val name = "مشروع — ${DATE_FMT.format(Date())}"
@@ -61,6 +63,13 @@ object ProjectDraftManager {
                 put("volume",       c.volume.toDouble())
                 put("filterCmd",    c.filterCmd)
                 put("transition",   c.transition)
+                put("audioFadeInMs", c.audioFadeInMs)
+                put("audioFadeOutMs", c.audioFadeOutMs)
+                put("chromaKeyColor", c.chromaKeyColor ?: "")
+                put("chromaSimilarity", c.chromaSimilarity.toDouble())
+                put("chromaSmoothness", c.chromaSmoothness.toDouble())
+                put("overlayEffect", c.overlayEffect ?: "")
+                put("speedRamp", c.speedRamp ?: "")
             })
         }
 
@@ -82,6 +91,22 @@ object ProjectDraftManager {
                 put("normalizedY",  o.normalizedY.toDouble())
                 put("textScale",    o.textScale.toDouble())
                 put("textRotation", o.textRotation.toDouble())
+                put("animationType", o.animationType)
+            })
+        }
+
+        val stickersArr = JSONArray()
+        val stickerList = stickerOverlays
+        for (s in stickerList) {
+            stickersArr.put(JSONObject().apply {
+                put("id", s.id)
+                put("lottieUrl", s.lottieUrl)
+                put("startSec", s.startSec.toDouble())
+                put("endSec", s.endSec.toDouble())
+                put("normalizedX", s.normalizedX.toDouble())
+                put("normalizedY", s.normalizedY.toDouble())
+                put("scale", s.scale.toDouble())
+                put("rotation", s.rotation.toDouble())
             })
         }
 
@@ -89,8 +114,10 @@ object ProjectDraftManager {
             put("id",               id)
             put("name",             name)
             put("savedAt",          System.currentTimeMillis())
+            put("isAudioDuckingEnabled", isAudioDuckingEnabled)
             put("clips",            clipsArr)
             put("textOverlays",     overlaysArr)
+            put("stickerOverlays",  stickersArr)
             put("projectAudioUri",  projectAudioUri?.toString() ?: "")
         }
 
@@ -106,7 +133,9 @@ object ProjectDraftManager {
         val savedAt: Long,
         val clips: List<VideoClip>,
         val textOverlays: List<TextOverlay>,
-        val projectAudioUri: Uri?
+        val stickerOverlays: List<StickerOverlay> = emptyList(),
+        val projectAudioUri: Uri?,
+        val isAudioDuckingEnabled: Boolean = false
     )
 
     fun load(ctx: Context, id: String): DraftData? {
@@ -164,7 +193,14 @@ object ProjectDraftManager {
                 speedFactor  = c.getDouble("speedFactor").toFloat(),
                 volume       = c.getDouble("volume").toFloat(),
                 filterCmd    = c.optString("filterCmd", ""),
-                transition   = c.optString("transition", "none")
+                transition   = c.optString("transition", "none"),
+                audioFadeInMs = c.optLong("audioFadeInMs", 0L),
+                audioFadeOutMs = c.optLong("audioFadeOutMs", 0L),
+                chromaKeyColor = c.optString("chromaKeyColor", "").takeIf { it.isNotBlank() },
+                chromaSimilarity = c.optDouble("chromaSimilarity", 0.1).toFloat(),
+                chromaSmoothness = c.optDouble("chromaSmoothness", 0.05).toFloat(),
+                overlayEffect = c.optString("overlayEffect", "").takeIf { it.isNotBlank() },
+                speedRamp = c.optString("speedRamp", "").takeIf { it.isNotBlank() }
             )
         }
 
@@ -185,12 +221,29 @@ object ProjectDraftManager {
                 normalizedX  = o.getDouble("normalizedX").toFloat(),
                 normalizedY  = o.getDouble("normalizedY").toFloat(),
                 textScale    = o.getDouble("textScale").toFloat(),
-                textRotation = o.getDouble("textRotation").toFloat()
+                textRotation = o.getDouble("textRotation").toFloat(),
+                animationType = o.optString("animationType", "none")
             )
         }
 
         val audioUriStr = root.optString("projectAudioUri", "")
         val audioUri = if (audioUriStr.isNotBlank()) Uri.parse(audioUriStr) else null
+
+        val isDucking = root.optBoolean("isAudioDuckingEnabled", false)
+        val stickersArr = root.optJSONArray("stickerOverlays") ?: JSONArray()
+        val stickers = (0 until stickersArr.length()).map { i ->
+            val s = stickersArr.getJSONObject(i)
+            StickerOverlay(
+                id = s.getLong("id"),
+                lottieUrl = s.getString("lottieUrl"),
+                startSec = s.getDouble("startSec").toFloat(),
+                endSec = s.getDouble("endSec").toFloat(),
+                normalizedX = s.getDouble("normalizedX").toFloat(),
+                normalizedY = s.getDouble("normalizedY").toFloat(),
+                scale = s.getDouble("scale").toFloat(),
+                rotation = s.getDouble("rotation").toFloat()
+            )
+        }
 
         return DraftData(
             id              = root.getString("id"),
@@ -198,7 +251,9 @@ object ProjectDraftManager {
             savedAt         = root.getLong("savedAt"),
             clips           = clips,
             textOverlays    = overlays,
-            projectAudioUri = audioUri
+            stickerOverlays = stickers,
+            projectAudioUri = audioUri,
+            isAudioDuckingEnabled = isDucking
         )
     }
 }
